@@ -82,4 +82,12 @@ btnRequest.addEventListener("click", async () => {
     if (String(err).includes("already been approved")) {
       log("profileはすでに同意済み（エラーではなく正常）");
 
-      const pr
+      const profile = await liff.getProfile();
+      greet(profile.displayName);
+      hideButtonAfterConsent();
+      return;
+    }
+  }
+});
+
+initLiff();
