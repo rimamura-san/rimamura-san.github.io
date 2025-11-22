@@ -4,18 +4,15 @@ function log(msg) {
   logEl.textContent += "\n" + msg;
 }
 
-// 挨拶エリア
 const greetEl = document.getElementById("greet");
-
-// ボタン
 const btnRequest = document.getElementById("btn-request");
 
-// 挨拶を表示
+// 挨拶
 function greet(name) {
   greetEl.textContent = `${name} さん、こんにちは！`;
 }
 
-// ボタンを非表示にしてメッセージ表示
+// ボタン消してメッセージ
 function hideButtonAfterConsent() {
   btnRequest.style.display = "none";
   const msg = document.createElement("div");
@@ -25,22 +22,33 @@ function hideButtonAfterConsent() {
   greetEl.insertAdjacentElement("afterend", msg);
 }
 
-// LIFF 初期化（最初は openid のみで起動）
+// LIFF 初期化
 async function initLiff() {
   try {
-    await liff.init({
-      liffId: "2008493036-jGpNZplP" // ←あなたのIDに変更
-    });
-
+    await liff.init({ liffId: "2008493036-jGpNZplP" });
     log("LIFF init 完了");
 
-    // openid の UID を表示（簡略化同意ONでも最初から取れる）
+    // UID 表示
     const decoded = liff.getDecodedIDToken();
     if (decoded?.sub) {
       log(`UID: ${decoded.sub}`);
     }
 
-    // 初回は profile を取りに行かない（モーダル自動発火を防ぐ）
+    // 🔥 ここで profile 同意済みかチェック
+    const permissions = await liff.permission.query();
+    const hasProfile = permissions?.permissions?.profile === "granted";
+
+    if (hasProfile) {
+      log("profile同意済み（初回から同意済み）");
+
+      // すでに同意済み → こんにちは表示してボタン非表示
+      const profile = await liff.getProfile();
+      greet(profile.displayName);
+      hideButtonAfterConsent();
+      return;
+    }
+
+    // ここに来たら profile 未同意
     log("profile取得未実行（まだ同意なし）");
 
   } catch (e) {
@@ -48,29 +56,30 @@ async function initLiff() {
   }
 }
 
-// ボタン押下で requestAll → profile取得
+// requestAll
 btnRequest.addEventListener("click", async () => {
   log("追加同意リクエスト開始…");
 
   try {
-    const res = await liff.permission.requestAll();
+    const res = await liff.permission.requestAll({
+      withVerificationScreen: true // 通常同意で安定
+    });
     log("requestAll 結果：" + JSON.stringify(res));
 
+    // 🔥 permission 結果が "granted" の場合
     if (res.permissions?.profile === "granted") {
-
-      // 初めてここで profile を取りに行く
       const profile = await liff.getProfile();
       log("profile取得成功！");
       greet(profile.displayName);
       hideButtonAfterConsent();
-
-    } else {
-      log("profile 同意なし or 拒否");
+      return;
     }
 
   } catch (err) {
     log("requestAll エラー：" + err);
-  }
-});
 
-initLiff();
+    // 🔥 ここ重要：すでに許可済みのパターン
+    if (String(err).includes("already been approved")) {
+      log("profileはすでに同意済み（エラーではなく正常）");
+
+      const pr
