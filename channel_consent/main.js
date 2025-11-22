@@ -25,38 +25,30 @@ function hideButtonAfterConsent() {
   greetEl.insertAdjacentElement("afterend", msg);
 }
 
-// LIFF 初期化
+// LIFF 初期化（最初は openid のみで起動）
 async function initLiff() {
   try {
     await liff.init({
-      liffId: "2008493036-jGpNZplP"    // ← あなたの LIFF Lite ID に変更
+      liffId: "2008493036-jGpNZplP" // ←あなたのIDに変更
     });
 
     log("LIFF init 完了");
 
-    // openid（ID Token）から UID を表示
+    // openid の UID を表示（簡略化同意ONでも最初から取れる）
     const decoded = liff.getDecodedIDToken();
-    if (decoded && decoded.sub) {
+    if (decoded?.sub) {
       log(`UID: ${decoded.sub}`);
-    } else {
-      log("UID 未取得");
     }
 
-    // profile取得（初回は consent 無いので失敗）
-    try {
-      const profile = await liff.getProfile();
-      log("profile取得成功（すでに同意済み？）");
-      greet(profile.displayName);  // 挨拶表示
-    } catch {
-      log("profile取得失敗（まだ profile 同意なし）");
-    }
+    // 初回は profile を取りに行かない（モーダル自動発火を防ぐ）
+    log("profile取得未実行（まだ同意なし）");
 
   } catch (e) {
     log("LIFF init エラー：" + e);
   }
 }
 
-// requestAll（追加同意）
+// ボタン押下で requestAll → profile取得
 btnRequest.addEventListener("click", async () => {
   log("追加同意リクエスト開始…");
 
@@ -65,10 +57,13 @@ btnRequest.addEventListener("click", async () => {
     log("requestAll 結果：" + JSON.stringify(res));
 
     if (res.permissions?.profile === "granted") {
+
+      // 初めてここで profile を取りに行く
       const profile = await liff.getProfile();
       log("profile取得成功！");
       greet(profile.displayName);
-      hideButtonAfterConsent();   // ← ボタンを隠してメッセージ表示
+      hideButtonAfterConsent();
+
     } else {
       log("profile 同意なし or 拒否");
     }
@@ -79,5 +74,3 @@ btnRequest.addEventListener("click", async () => {
 });
 
 initLiff();
-
-
