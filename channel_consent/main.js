@@ -36,5 +36,38 @@ async function initLiff() {
   }
 }
 
+// requestAll
+btnRequest.addEventListener("click", async () => {
+  log("追加同意リクエスト開始…");
+
+  try {
+    const res = await liff.permission.requestAll({
+      withVerificationScreen: true // 通常同意で安定
+    });
+    log("requestAll 結果：" + JSON.stringify(res));
+
+    // 🔥 permission 結果が "granted" の場合
+    if (res.permissions?.profile === "granted") {
+      const profile = await liff.getProfile();
+      log("profile取得成功！");
+      greet(profile.displayName);
+      hideButtonAfterConsent();
+      return;
+    }
+
+  } catch (err) {
+    log("requestAll エラー：" + err);
+
+    // 🔥 ここ重要：すでに許可済みのパターン
+    if (String(err).includes("already been approved")) {
+      log("profileはすでに同意済み（エラーではなく正常）");
+
+      const profile = await liff.getProfile();
+      greet(profile.displayName);
+      hideButtonAfterConsent();
+      return;
+    }
+  }
+});
 
 initLiff();
