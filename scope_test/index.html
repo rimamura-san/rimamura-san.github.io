@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Profile Scope Test</title>
+  <script src="https://static.line-scdn.net/liff/3/sdk.js"></script>
+</head>
+<body>
+  <h1>scope=profile テスト</h1>
+  <p id="status">LIFFを初期化中...</p>
+
+  <script>
+    async function main() {
+      try {
+        await liff.init({ liffId: "YOUR_LIFF_ID" });
+
+        document.getElementById("status").textContent =
+          "LIFF init 完了（既に同意済みならモーダル無しでここまで来る）";
+
+      } catch (err) {
+        console.error(err);
+        document.getElementById("status").textContent =
+          "エラー: " + err;
+      }
+    }
+    main();
+  </script>
+</body>
+</html>

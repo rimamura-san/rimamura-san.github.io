@@ -28,9 +28,6 @@ async function initLiff() {
     await liff.init({ liffId: "2008493036-jGpNZplP" });
     log("LIFF init 完了");
 
-    // ここに来たら profile 未同意
-    log("profile取得未実行（まだ同意なし）");
-
   } catch (e) {
     log("LIFF init エラー：" + e);
   }
