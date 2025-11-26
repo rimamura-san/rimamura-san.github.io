@@ -2,27 +2,32 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>Profile Scope Test</title>
+  <title>Permission Test</title>
   <script src="https://static.line-scdn.net/liff/3/sdk.js"></script>
 </head>
 <body>
-  <h1>scope=profile テスト</h1>
-  <p id="status">LIFFを初期化中...</p>
+  <h1>Permission Request Test</h1>
+
+  <button id="btn">権限リクエストする</button>
+
+  <p id="log"></p>
 
   <script>
     async function main() {
-      try {
-        await liff.init({ liffId: "2008572270-A4PbJ3n8" });
-
-        document.getElementById("status").textContent =
-          "LIFF init 完了（既に同意済みならモーダル無しでここまで来る）";
-
-      } catch (err) {
-        console.error(err);
-        document.getElementById("status").textContent =
-          "エラー: " + err;
-      }
+      await liff.init({ liffId: "YOUR_LIFF_ID" });
+      document.getElementById("log").textContent = "init完了";
     }
+
+    document.getElementById("btn").addEventListener("click", async () => {
+      try {
+        const result = await liff.permission.requestAll();
+        document.getElementById("log").textContent = JSON.stringify(result);
+      } catch (e) {
+        console.error(e);
+        document.getElementById("log").textContent = "エラー: " + e.message;
+      }
+    });
+
     main();
   </script>
 </body>
