@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LIFF 友だち機能個別ボタン検証</title>
+  <title>LIFF 友だち機能動的ID検証</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -74,16 +74,29 @@
       background-color: #f0fdf4;
       border-color: #bbf7d0;
     }
+    .highlight {
+      background-color: #fef08a;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
 
-  <h1>LIFF 友だち機能検証</h1>
+  <h1>LIFF 友だち機能検証（ID自動切替版）</h1>
 
   <!-- 💡 リアルタイムJSエラー検出モニター -->
   <div class="card" style="border: 2px solid #ef4444; background-color: #fef2f2;">
     <h3 style="color: #b91c1c; margin-top: 0; font-size: 1rem;">🛠️ エラーリアルタイム監視モニター</h3>
     <div id="debug-monitor" class="status error">エラーは検出されていません。正常にJavaScriptが動作しています。</div>
+  </div>
+
+  <!-- 現在読み込んでいるIDの表示 -->
+  <div class="card" style="border: 1px solid #3b82f6; background-color: #eff6ff;">
+    <h2>現在検出された LIFF ID</h2>
+    <p>URLのパラメータ <code>?liffid=xxx</code> から自動取得したID：</p>
+    <div id="loaded-liff-id" class="status" style="font-weight: bold; color: #1d4ed8; font-size: 1rem;">読み込み中...</div>
   </div>
 
   <!-- 1. 初期化状態 -->
@@ -95,7 +108,7 @@
   <!-- 2. liff.getFriendship() -->
   <div class="card">
     <h2>2. 友だちかどうか確認</h2>
-    <p><code>liff.getFriendship()</code> を実行して、公式アカウントと現在友だち（ブロックなし）かどうかを取得します。</p>
+    <p><code>liff.getFriendship()</code> を実行して、現在の友だち関係を取得します [1]。</p>
     <button id="btn-get" disabled>友だち状態をチェックする</button>
     <div id="get-status" class="status">結果はここに表示されます</div>
   </div>
@@ -103,7 +116,7 @@
   <!-- 3. liff.requestFriendship() -->
   <div class="card">
     <h2>3. 友だち追加画面を出す</h2>
-    <p><code>liff.requestFriendship()</code> を実行して、友だち追加ポップアップ（またはブロック解除の案内）を強制的に呼び出します。</p>
+    <p><code>liff.requestFriendship()</code> を実行して、友だち追加ポップアップを強制起動します [2]。</p>
     <button id="btn-request" disabled>友だち追加ポップアップを起動</button>
     <div id="request-status" class="status">結果はここに表示されます</div>
   </div>
@@ -111,17 +124,27 @@
   <!-- LINE LIFF SDK CDN -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script>
-    // ----------------------------------------------------
-    // 【最重要】LIFF IDを、完全に安全な半角文字列として埋め込んでいます
-    // ----------------------------------------------------
-    const MY_LIFF_ID = "2010552506-d2NuY6Vo";
-
     const monitorEl = document.getElementById("debug-monitor");
+    const loadedIdEl = document.getElementById("loaded-liff-id");
     const initStatusEl = document.getElementById("init-status");
     const btnGet = document.getElementById("btn-get");
     const getStatusEl = document.getElementById("get-status");
     const btnRequest = document.getElementById("btn-request");
     const requestStatusEl = document.getElementById("request-status");
+
+    // ----------------------------------------------------
+    // ⚙️ URLパラメータから LIFF ID を動的に引っこ抜く処理
+    // ----------------------------------------------------
+    // URLの「?liffid=xxxxxx」の部分を解析します
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramLiffId = urlParams.get('liffid');
+
+    // もしパラメータにliffidがついていなければ、デフォルトとして「本番用ID」を使います
+    const DEFAULT_LIFF_ID = "2010552506-d2NuY6Vo"; 
+    const MY_LIFF_ID = paramLiffId ? paramLiffId.trim() : DEFAULT_LIFF_ID;
+
+    // 画面上に、今どのIDで動いているかを表示
+    loadedIdEl.innerHTML = `使用中のID: <span class="highlight">${MY_LIFF_ID}</span> ${paramLiffId ? '(URLパラメータから取得)' : '(パラメータなしのためデフォルト本番用を使用)'}`;
 
     // モニター表示用のエラー表示関数
     function showMonitorError(title, detail) {
@@ -142,14 +165,16 @@
     // DOM読み込み時の file:// 起動チェック
     document.addEventListener("DOMContentLoaded", () => {
       if (window.location.protocol === 'file:') {
-        showMonitorError("動作環境エラー", "ローカルファイルを直接ダブルクリックして開いています。サーバーにアップロードしてからアクセスしてください。");
+        showMonitorError("動作環境エラー", "ローカルファイルを直接ダブルクリックして開いています。GitHub Pages等にアップロードしてからアクセスしてください。");
       }
     });
 
-    // LIFF初期化
-    liff.init({ liffId: MY_LIFF_ID })
+    // ----------------------------------------------------
+    // 🚀 LIFF 初期化処理
+    // ----------------------------------------------------
+    liff.init({ liffId: MY_LIFF_ID }) [3]
       .then(() => {
-        initStatusEl.textContent = "LIFF初期化に成功しました！\nLIFF ID: " + liff.id;
+        initStatusEl.textContent = "LIFF初期化に成功しました！\n稼働中の LIFF ID: " + liff.id; [4]
         initStatusEl.className = "status success";
         monitorEl.textContent = "正常に稼働中。エラーはありません。";
         monitorEl.className = "status success";
@@ -161,7 +186,7 @@
       .catch((err) => {
         initStatusEl.textContent = "初期化失敗: " + err.code + " - " + err.message;
         initStatusEl.className = "status error";
-        showMonitorError("liff.init() 失敗", `コード: ${err.code}<br>メッセージ: ${err.message}`);
+        showMonitorError("liff.init() 失敗", `コード: ${err.code}<br>メッセージ: ${err.message}<br><br>※URLのパラメータ後ろに余計な文字やスペース、古いキャッシュが残っていないかご確認ください。`);
       });
 
     // 1. 友だち状態の確認
@@ -169,7 +194,7 @@
       getStatusEl.textContent = "確認中...";
       getStatusEl.className = "status";
 
-      liff.getFriendship()
+      liff.getFriendship() [1]
         .then((data) => {
           if (data.friendFlag) {
             getStatusEl.textContent = "友だちです！ (friendFlag: true)";
@@ -190,7 +215,7 @@
       requestStatusEl.textContent = "起動中...";
       requestStatusEl.className = "status";
 
-      liff.requestFriendship()
+      liff.requestFriendship() [2]
         .then(() => {
           requestStatusEl.textContent = "ポップアップ処理が終了しました。もう一度、上の「友だち状態をチェックする」ボタンを押して最新状態を再確認してください。";
           requestStatusEl.className = "status success";
@@ -204,7 +229,6 @@
           }
         });
     });
-
   </script>
 </body>
 </html>
