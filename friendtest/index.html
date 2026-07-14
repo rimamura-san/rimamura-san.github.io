@@ -1,77 +1,175 @@
-<!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <title>LIFF 友だち機能テスト</title>
-    <!-- ① LIFF SDKの読み込み -->
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LIFF Friendship Demo</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 20px;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 15px;
+    }
+    button {
+      background-color: #06C755; /* LINE Green */
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+    button:active {
+      opacity: 0.8;
+    }
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    .status {
+      font-size: 14px;
+      margin-top: 10px;
+      padding: 8px;
+      border-radius: 4px;
+      background-color: #e9ecef;
+      word-break: break-all;
+    }
+    .error {
+      color: #721c24;
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+    }
+    .success {
+      color: #155724;
+      background-color: #d4edda;
+      border: 1px solid #c3e6cb;
+    }
+  </style>
 </head>
 <body>
-    <h1>LIFF 友だち追加機能テスト</h1>
-    
-    <button id="check-btn">① 友だち状態をチェック</button>
-    <button id="request-btn" style="display:none;">② 友だち追加画面を開く</button>
 
-    <div id="status" style="margin-top: 20px; white-space: pre-wrap; font-family: monospace;"></div>
+  <h1>LIFF 友だち機能（Friendship）デモ</h1>
 
-    <script>
-        const liffId = '2010552506-d2NuY6Vo'; // 💡ここに自分のLIFF IDを入れてね！
-        const statusDiv = document.getElementById('status');
-        const requestBtn = document.getElementById('request-btn');
+  <!-- 1. LIFF 初期化ステータス -->
+  <div class="card">
+    <h3>1. LIFF 初期状態</h3>
+    <div id="init-status" class="status">初期化中...</div>
+  </div>
 
-        function log(message) {
-            statusDiv.innerText += message + '\n';
-        }
+  <!-- 2. liff.getFriendship() の検証 -->
+  <div class="card">
+    <h3>2. 友だち関係の確認</h3>
+    <p>現在のユーザーと、連携されている公式アカウントの友だち関係を取得します。</p>
+    <button id="btn-get-friendship" disabled>liff.getFriendship() を実行</button>
+    <div id="friendship-result" class="status">結果はここに表示されます</div>
+  </div>
 
-        // ② LIFFの初期化
-        liff.init({ liffId: liffId })
-            .then(() => {
-                log('LIFF初期化成功！');
-                
-                // ログインしていなければログインさせる
-                if (!liff.isLoggedIn()) {
-                    log('ログインしていないのでリダイレクトします...');
-                    liff.login();
-                } else {
-                    log('ログイン済みです。');
-                }
-            })
-            .catch((err) => {
-                log('初期化エラー: ' + err);
-            });
+  <!-- 3. liff.requestFriendship() の検証 -->
+  <div class="card">
+    <h3>3. 友だち追加の促進</h3>
+    <p>LINE公式アカウントの友だち追加・ブロック解除を促す画面を表示します。</p>
+    <button id="btn-request-friendship" disabled>liff.requestFriendship() を実行</button>
+    <div id="request-result" class="status">結果はここに表示されます</div>
+  </div>
 
-        // 🟢 1. 友だち状態のチェック
-        document.getElementById('check-btn').addEventListener('click', () => {
-            liff.getFriendship()
-                .then((data) => {
-                    log('--- getFriendship 結果 ---');
-                    log(JSON.stringify(data, null, 2));
-                    
-                    if (data.friendFlag) {
-                        log('結果：すでに公式アカウントと友だちです！');
-                        requestBtn.style.display = 'none';
-                    } else {
-                        log('結果：まだ友だちではありません。');
-                        requestBtn.style.display = 'block'; // 追加ボタンを表示
-                    }
-                })
-                .catch((err) => {
-                    log('getFriendshipエラー: ' + err);
-                });
+  <!-- LINE LIFF SDK CDN (v2の最新版エッジパスを使用) -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script>
+    // ----------------------------------------------------
+    // 【必須】あなたの LIFF ID をここに設定してください
+    // ----------------------------------------------------
+    const MY_LIFF_ID = "YOUR_LIFF_ID_HERE";
+
+    const initStatusEl = document.getElementById('init-status');
+    const btnGetFriendship = document.getElementById('btn-get-friendship');
+    const friendshipResultEl = document.getElementById('friendship-result');
+    const btnRequestFriendship = document.getElementById('btn-request-friendship');
+    const requestResultEl = document.getElementById('request-result');
+
+    // LIFF アプリの初期化
+    liff.init({
+      liffId: 2010552506-d2NuY6Vo
+    })
+    .then(() => {
+      initStatusEl.textContent = "LIFF 初期化に成功しました！";
+      initStatusEl.classList.add('success');
+      
+      // 初期化完了後に各ボタンを有効化
+      btnGetFriendship.disabled = false;
+      btnRequestFriendship.disabled = false;
+
+      // ログインしていない場合はログインを促すボタンを表示（外部ブラウザ等の検証用）
+      if (!liff.isLoggedIn()) {
+        initStatusEl.innerHTML = "初期化完了（未ログイン状態）。テストするにはログインしてください。<br>";
+        const loginBtn = document.createElement('button');
+        loginBtn.textContent = "LINEログイン";
+        loginBtn.style.marginTop = "10px";
+        loginBtn.onclick = () => liff.login();
+        initStatusEl.appendChild(loginBtn);
+      }
+    })
+    .catch((error) => {
+      initStatusEl.textContent = "初期化失敗: " + error.code + " - " + error.message;
+      initStatusEl.classList.add('error');
+      console.error("LIFF initialization failed", error);
+    });
+
+    // 1. 友だち状態の取得 (liff.getFriendship())
+    btnGetFriendship.addEventListener('click', () => {
+      friendshipResultEl.textContent = "取得中...";
+      friendshipResultEl.className = "status";
+
+      liff.getFriendship()
+        .then((data) => {
+          // data.friendFlag が true なら友だち（ブロックなし）、false ならそれ以外
+          if (data.friendFlag) {
+            friendshipResultEl.textContent = "友だちです (friendFlag: true)";
+            friendshipResultEl.classList.add('success');
+          } else {
+            friendshipResultEl.textContent = "友だちではありません、またはブロックされています (friendFlag: false)";
+            friendshipResultEl.classList.add('error');
+          }
+        })
+        .catch((error) => {
+          friendshipResultEl.textContent = "エラー: " + error.code + " - " + error.message;
+          friendshipResultEl.classList.add('error');
+          console.error("getFriendship failed", error);
         });
+    });
 
-        // 🟢 2. 友だち追加プロンプトの表示
-        requestBtn.addEventListener('click', () => {
-            log('友だち追加画面をリクエスト中...');
-            liff.requestFriendship()
-                .then(() => {
-                    log('requestFriendshipの処理が完了しました（画面が閉じられました）');
-                    // 完了したらもう一度状態をチェックしてみるといいよ
-                })
-                .catch((err) => {
-                    log('requestFriendshipエラー: ' + err);
-                });
+    // 2. 友だち追加・ブロック解除のポップアップ表示 (liff.requestFriendship())
+    btnRequestFriendship.addEventListener('click', () => {
+      requestResultEl.textContent = "処理中...";
+      requestResultEl.className = "status";
+
+      liff.requestFriendship()
+        .then(() => {
+          // ※ 注意：メソッド自体はポップアップ画面が閉じられたらresolveされます。
+          // 実際に友だち追加をしたか、あるいはキャンセルしたかは戻り値では判別できません。
+          requestResultEl.textContent = "処理完了。最新の友だち状態は、上の『liff.getFriendship()』ボタンを押して再確認してください。";
+          requestResultEl.classList.add('success');
+        })
+        .catch((error) => {
+          // 画面サイズが Full でない場合や、公式アカウントが未リンクだと FORBIDDEN エラーになります
+          if (error.code === 'FORBIDDEN') {
+            requestResultEl.textContent = "エラー (FORBIDDEN): LIFFアプリの画面サイズ設定が「Full」になっていること、およびLINE公式アカウントがチャネルに正しくリンクされているか確認してください。";
+          } else {
+            requestResultEl.textContent = "エラー: " + error.code + " - " + error.message;
+          }
+          requestResultEl.classList.add('error');
+          console.error("requestFriendship failed", error);
         });
-    </script>
+    });
+  </script>
 </body>
 </html>
