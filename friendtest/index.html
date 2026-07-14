@@ -3,197 +3,208 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LIFF Friendship Debugger</title>
+  <title>LIFF 友だち機能個別ボタン検証</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       padding: 20px;
-      background-color: #f8f9fa;
-      color: #333;
+      background-color: #f3f4f6;
+      color: #1f2937;
     }
     .card {
       background: white;
-      border-radius: 8px;
-      padding: 15px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      margin-bottom: 15px;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      margin-bottom: 16px;
+    }
+    h2 {
+      margin-top: 0;
+      color: #111827;
+      font-size: 1.25rem;
+    }
+    p {
+      font-size: 0.9rem;
+      color: #4b5563;
+      line-height: 1.4;
     }
     button {
-      background-color: #06C755;
+      background-color: #06C755; /* LINE Green */
       color: white;
       border: none;
-      padding: 12px 20px;
-      font-size: 16px;
-      border-radius: 4px;
+      padding: 12px 16px;
+      font-size: 1rem;
+      border-radius: 6px;
       cursor: pointer;
       width: 100%;
-      margin-bottom: 10px;
       font-weight: bold;
+      margin-bottom: 12px;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #05b04c;
     }
     button:disabled {
-      background-color: #ccc;
+      background-color: #9ca3af;
       cursor: not-allowed;
     }
+    #btn-request {
+      background-color: #1e3a8a; /* 友だち追加ボタンはディープブルー */
+    }
+    #btn-request:hover {
+      background-color: #172554;
+    }
     .status {
-      font-size: 14px;
-      margin-top: 10px;
-      padding: 8px;
-      border-radius: 4px;
-      background-color: #e9ecef;
+      font-family: monospace;
+      font-size: 0.85rem;
+      padding: 10px;
+      border-radius: 6px;
+      background-color: #f9fafb;
+      border: 1px solid #e5e7eb;
       word-break: break-all;
+      white-space: pre-wrap;
     }
     .error {
-      color: #721c24;
-      background-color: #f8d7da;
-      border: 1px solid #f5c6cb;
+      color: #b91c1c;
+      background-color: #fef2f2;
+      border-color: #fca5a5;
     }
     .success {
-      color: #155724;
-      background-color: #d4edda;
-      border: 1px solid #c3e6cb;
+      color: #15803d;
+      background-color: #f0fdf4;
+      border-color: #bbf7d0;
     }
   </style>
 </head>
 <body>
 
-  <h1>LIFF 友だち機能デモ（デバッグモニター付）</h1>
+  <h1>LIFF 友だち機能検証</h1>
 
-  <!-- 💡 画面上エラー監視モニター (スマホでのデバッグに超便利です) -->
-  <div class="card" style="background-color: #ffeef0; border: 1px solid #ffa3a3;">
-    <h3 style="color: #d11d1d; margin-top: 0; font-size: 16px;">🛠️ 緊急デバッグモニター</h3>
-    <p style="font-size: 12px; margin: 5px 0; color: #555;">スクリプトのエラーや初期設定の不備がここに直接リアルタイム表示されます。</p>
-    <div id="debug-log" style="font-family: monospace; font-size: 12px; color: #155724; word-break: break-all; white-space: pre-wrap; background: #fff; padding: 10px; border-radius: 4px; border: 1px solid #c3e6cb;">エラーは検出されていません。正常にスクリプトが稼働しています。</div>
+  <!-- 💡 リアルタイムJSエラー検出モニター -->
+  <div class="card" style="border: 2px solid #ef4444; background-color: #fef2f2;">
+    <h3 style="color: #b91c1c; margin-top: 0; font-size: 1rem;">🛠️ エラーリアルタイム監視モニター</h3>
+    <div id="debug-monitor" class="status error">エラーは検出されていません。正常にJavaScriptが動作しています。</div>
   </div>
 
-  <!-- 1. LIFF 初期化ステータス -->
+  <!-- 1. 初期化状態 -->
   <div class="card">
-    <h3>1. LIFF 初期状態</h3>
+    <h2>1. LIFF 初期状態</h2>
     <div id="init-status" class="status">初期化中...</div>
   </div>
 
-  <!-- 2. 動作検証エリア -->
+  <!-- 2. liff.getFriendship() -->
   <div class="card">
-    <h3>2. 友だち追加の検証</h3>
-    <p>現在の友だち状態：<strong id="current-friend-status">確認中...</strong></p>
-    <button id="btn-action" disabled>友だち追加画面 (liff.requestFriendship) を起動</button>
-    <div id="log-result" class="status">結果ログはここに表示されます</div>
+    <h2>2. 友だちかどうか確認</h2>
+    <p><code>liff.getFriendship()</code> を実行して、公式アカウントと現在友だち（ブロックなし）かどうかを取得します。</p>
+    <button id="btn-get" disabled>友だち状態をチェックする</button>
+    <div id="get-status" class="status">結果はここに表示されます</div>
+  </div>
+
+  <!-- 3. liff.requestFriendship() -->
+  <div class="card">
+    <h2>3. 友だち追加画面を出す</h2>
+    <p><code>liff.requestFriendship()</code> を実行して、友だち追加ポップアップ（またはブロック解除の案内）を強制的に呼び出します。</p>
+    <button id="btn-request" disabled>友だち追加ポップアップを起動</button>
+    <div id="request-status" class="status">結果はここに表示されます</div>
   </div>
 
   <!-- LINE LIFF SDK CDN -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script>
     // ----------------------------------------------------
-    // 【最重要】あなたの LIFF ID をここに設定してください
+    // 【最重要】LIFF IDを、完全に安全な半角文字列として埋め込んでいます
     // ----------------------------------------------------
-    const MY_LIFF_ID = '2010552506-d2NuY6Vo';
+    const MY_LIFF_ID = "2010552506-d2NuY6Vo";
 
-    // --- エラー監視・強制出力処理 ---
-    const debugLogEl = document.getElementById('debug-log');
-    function showError(title, message) {
-      debugLogEl.style.color = '#d11d1d';
-      debugLogEl.style.borderColor = '#ffa3a3';
-      debugLogEl.parentElement.style.backgroundColor = '#ffeef0';
-      debugLogEl.innerHTML = `<strong>【${title}】</strong><br>${message}`;
+    const monitorEl = document.getElementById("debug-monitor");
+    const initStatusEl = document.getElementById("init-status");
+    const btnGet = document.getElementById("btn-get");
+    const getStatusEl = document.getElementById("get-status");
+    const btnRequest = document.getElementById("btn-request");
+    const requestStatusEl = document.getElementById("request-status");
+
+    // モニター表示用のエラー表示関数
+    function showMonitorError(title, detail) {
+      monitorEl.innerHTML = `<strong>【${title}】</strong><br>${detail}`;
+      monitorEl.className = "status error";
     }
 
-    // (A) JavaScriptの構文エラーなどを画面に表示
+    // 全体のJavaScriptエラーを強制キャッチ
     window.onerror = function(message, source, lineno, colno, error) {
-      showError("JS実行時エラー", `${message}<br><small>場所: ${source} (${lineno}行目, ${colno}文字目)</small>`);
+      showMonitorError("JS実行エラー", `${message}<br><small>場所: ${source} (行: ${lineno}, 文字目: ${colno})</small>`);
       return false;
     };
 
-    // (B) Promise内のエラー（API失敗など）を画面に表示
     window.onunhandledrejection = function(event) {
-      const err = event.reason;
-      const msg = err ? (err.message || err.code || err) : "不明な非同期エラー";
-      showError("Promiseエラー (非同期)", msg);
+      showMonitorError("Promiseエラー", event.reason ? (event.reason.message || event.reason) : "非同期エラーが発生しました");
     };
 
-    // --- 起動前の環境事前自動チェック ---
+    // DOM読み込み時の file:// 起動チェック
     document.addEventListener("DOMContentLoaded", () => {
-      // (a) file:// 起動チェック（直接ダブルクリック対策）
       if (window.location.protocol === 'file:') {
-        showError("動作環境エラー", "HTMLファイルをPCで直接ダブルクリックして開いていませんか？<br>LIFFはセキュリティ上、<code>https://</code> で始まるウェブサーバー上に配置してアクセスする必要があります。<br><br>ローカルPCでテストする場合は、ローカルサーバー（http://localhost/...）を立ち上げてアクセスしてください。");
-        return;
-      }
-
-      // (b) ID未書き換えチェック
-      if (MY_LIFF_ID === "YOUR_LIFF_ID_HERE" || !MY_LIFF_ID) {
-        showError("初期設定エラー", "コード内の <code>MY_LIFF_ID</code> の値が <strong>'YOUR_LIFF_ID_HERE'</strong> のままになっています。<br>LINE Developersコンソールから取得した、ご自身の「LIFF ID」に書き換えてからサーバーへアップロードしてください。");
-        return;
+        showMonitorError("動作環境エラー", "ローカルファイルを直接ダブルクリックして開いています。サーバーにアップロードしてからアクセスしてください。");
       }
     });
 
-    // --- LIFFプログラム本体 ---
-    const initStatusEl = document.getElementById('init-status');
-    const btnAction = document.getElementById('btn-action');
-    const currentFriendStatusEl = document.getElementById('current-friend-status');
-    const logResultEl = document.getElementById('log-result');
-
-    // LIFFの初期化
+    // LIFF初期化
     liff.init({ liffId: MY_LIFF_ID })
-    .then(() => {
-      initStatusEl.textContent = "LIFF 初期化成功！正常に動作しています。";
-      initStatusEl.className = "status success";
-      btnAction.disabled = false;
+      .then(() => {
+        initStatusEl.textContent = "LIFF初期化に成功しました！\nLIFF ID: " + liff.id;
+        initStatusEl.className = "status success";
+        monitorEl.textContent = "正常に稼働中。エラーはありません。";
+        monitorEl.className = "status success";
 
-      // 初期起動時の友だち確認
-      updateFriendshipStatus();
-    })
-    .catch((error) => {
-      initStatusEl.textContent = "初期化失敗: " + error.code + " - " + error.message;
-      initStatusEl.className = "status error";
-      showError("liff.init失敗", `コード: ${error.code}<br>メッセージ: ${error.message}`);
-    });
+        // ボタンの有効化
+        btnGet.disabled = false;
+        btnRequest.disabled = false;
+      })
+      .catch((err) => {
+        initStatusEl.textContent = "初期化失敗: " + err.code + " - " + err.message;
+        initStatusEl.className = "status error";
+        showMonitorError("liff.init() 失敗", `コード: ${err.code}<br>メッセージ: ${err.message}`);
+      });
 
-    // 友だち状態の更新
-    function updateFriendshipStatus() {
-      return liff.getFriendship()
+    // 1. 友だち状態の確認
+    btnGet.addEventListener("click", () => {
+      getStatusEl.textContent = "確認中...";
+      getStatusEl.className = "status";
+
+      liff.getFriendship()
         .then((data) => {
           if (data.friendFlag) {
-            currentFriendStatusEl.textContent = "友だちです (true)";
-            currentFriendStatusEl.style.color = "#155724";
+            getStatusEl.textContent = "友だちです！ (friendFlag: true)";
+            getStatusEl.className = "status success";
           } else {
-            currentFriendStatusEl.textContent = "友だちではありません (false)";
-            currentFriendStatusEl.style.color = "#721c24";
+            getStatusEl.textContent = "友だちではない、またはブロックされています (friendFlag: false)";
+            getStatusEl.className = "status error";
           }
-          return data.friendFlag;
         })
-        .catch((error) => {
-          currentFriendStatusEl.textContent = "取得エラー";
-          showError("getFriendshipエラー", `${error.code} - ${error.message}`);
+        .catch((err) => {
+          getStatusEl.textContent = "エラー: " + err.code + " - " + err.message;
+          getStatusEl.className = "status error";
         });
-    }
+    });
 
-    // 友だち追加のアクション
-    btnAction.addEventListener('click', () => {
-      logResultEl.textContent = "liff.requestFriendship() を実行中...";
-      logResultEl.className = "status";
+    // 2. 友だち追加ポップアップを起動
+    btnRequest.addEventListener("click", () => {
+      requestStatusEl.textContent = "起動中...";
+      requestStatusEl.className = "status";
 
       liff.requestFriendship()
         .then(() => {
-          logResultEl.textContent = "処理完了。状態を再確認します...";
-          return updateFriendshipStatus();
+          requestStatusEl.textContent = "ポップアップ処理が終了しました。もう一度、上の「友だち状態をチェックする」ボタンを押して最新状態を再確認してください。";
+          requestStatusEl.className = "status success";
         })
-        .then((isFriend) => {
-          if (isFriend) {
-            logResultEl.textContent = "完了：現在友だち状態です！";
-            logResultEl.className = "status success";
+        .catch((err) => {
+          requestStatusEl.className = "status error";
+          if (err.code === 'FORBIDDEN') {
+            requestStatusEl.textContent = "エラー (FORBIDDEN)\n考えられる原因:\n・LIFFアプリの画面サイズ設定が「Full」になっていません。\n・LINE公式アカウントがチャネルに正しくリンクされていません。";
           } else {
-            logResultEl.textContent = "完了：友だち登録されませんでした（画面をキャンセルしたか、公式アカウントが未連携です）";
-            logResultEl.className = "status error";
+            requestStatusEl.textContent = "エラー: " + err.code + " - " + err.message;
           }
-        })
-        .catch((error) => {
-          logResultEl.className = "status error";
-          if (error.code === 'FORBIDDEN') {
-            logResultEl.textContent = "エラー (FORBIDDEN): LIFFアプリの画面サイズ設定が「Full」になっていること、およびLINE公式アカウントがチャネルに正しくリンクされているか確認してください。";
-          } else {
-            logResultEl.textContent = `エラー: ${error.code} - ${error.message}`;
-          }
-          showError("requestFriendshipエラー", `${error.code} - ${error.message}`);
         });
     });
+
   </script>
 </body>
 </html>
