@@ -172,7 +172,7 @@
     // ----------------------------------------------------
     // 🚀 LIFF 初期化処理
     // ----------------------------------------------------
-    liff.init({ liffId: MY_LIFF_ID }) [3]
+    liff.init({ liffId: MY_LIFF_ID })
       .then(() => {
         initStatusEl.textContent = "LIFF初期化に成功しました！\n稼働中の LIFF ID: " + liff.id;
         initStatusEl.className = "status success";
@@ -194,7 +194,7 @@
       getStatusEl.textContent = "確認中...";
       getStatusEl.className = "status";
 
-      liff.getFriendship() [1]
+      liff.getFriendship()
         .then((data) => {
           if (data.friendFlag) {
             getStatusEl.textContent = "友だちです！ (friendFlag: true)";
@@ -215,7 +215,7 @@
       requestStatusEl.textContent = "起動中...";
       requestStatusEl.className = "status";
 
-      liff.requestFriendship() [2]
+      liff.requestFriendship()
         .then(() => {
           requestStatusEl.textContent = "ポップアップ処理が終了しました。もう一度、上の「友だち状態をチェックする」ボタンを押して最新状態を再確認してください。";
           requestStatusEl.className = "status success";
