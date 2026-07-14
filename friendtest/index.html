@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>LIFF 友だち機能テスト</title>
+    <!-- ① LIFF SDKの読み込み -->
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+    <h1>LIFF 友だち追加機能テスト</h1>
+    
+    <button id="check-btn">① 友だち状態をチェック</button>
+    <button id="request-btn" style="display:none;">② 友だち追加画面を開く</button>
+
+    <div id="status" style="margin-top: 20px; white-space: pre-wrap; font-family: monospace;"></div>
+
+    <script>
+        const liffId = '2010552506-d2NuY6Vo'; // 💡ここに自分のLIFF IDを入れてね！
+        const statusDiv = document.getElementById('status');
+        const requestBtn = document.getElementById('request-btn');
+
+        function log(message) {
+            statusDiv.innerText += message + '\n';
+        }
+
+        // ② LIFFの初期化
+        liff.init({ liffId: liffId })
+            .then(() => {
+                log('LIFF初期化成功！');
+                
+                // ログインしていなければログインさせる
+                if (!liff.isLoggedIn()) {
+                    log('ログインしていないのでリダイレクトします...');
+                    liff.login();
+                } else {
+                    log('ログイン済みです。');
+                }
+            })
+            .catch((err) => {
+                log('初期化エラー: ' + err);
+            });
+
+        // 🟢 1. 友だち状態のチェック
+        document.getElementById('check-btn').addEventListener('click', () => {
+            liff.getFriendship()
+                .then((data) => {
+                    log('--- getFriendship 結果 ---');
+                    log(JSON.stringify(data, null, 2));
+                    
+                    if (data.friendFlag) {
+                        log('結果：すでに公式アカウントと友だちです！');
+                        requestBtn.style.display = 'none';
+                    } else {
+                        log('結果：まだ友だちではありません。');
+                        requestBtn.style.display = 'block'; // 追加ボタンを表示
+                    }
+                })
+                .catch((err) => {
+                    log('getFriendshipエラー: ' + err);
+                });
+        });
+
+        // 🟢 2. 友だち追加プロンプトの表示
+        requestBtn.addEventListener('click', () => {
+            log('友だち追加画面をリクエスト中...');
+            liff.requestFriendship()
+                .then(() => {
+                    log('requestFriendshipの処理が完了しました（画面が閉じられました）');
+                    // 完了したらもう一度状態をチェックしてみるといいよ
+                })
+                .catch((err) => {
+                    log('requestFriendshipエラー: ' + err);
+                });
+        });
+    </script>
+</body>
+</html>
