@@ -74,11 +74,20 @@
       background-color: #f0fdf4;
       border-color: #bbf7d0;
     }
+    .warning {
+      color: #9a3412;
+      background-color: #fff7ed;
+      border-color: #fed7aa;
+    }
     .highlight {
       background-color: #fef08a;
       padding: 2px 4px;
       border-radius: 4px;
       font-weight: bold;
+    }
+    /* 非表示用 */
+    .hidden {
+      display: none;
     }
   </style>
 </head>
@@ -108,7 +117,7 @@
   <!-- 2. liff.getFriendship() -->
   <div class="card">
     <h2>2. 友だちかどうか確認</h2>
-    <p><code>liff.getFriendship()</code> を実行して、現在の友だち関係を取得します [1]。</p>
+    <p><code>liff.getFriendship()</code> を実行して、現在の友だち関係を取得します。</p>
     <button id="btn-get" disabled>友だち状態をチェックする</button>
     <div id="get-status" class="status">結果はここに表示されます</div>
   </div>
@@ -116,9 +125,16 @@
   <!-- 3. liff.requestFriendship() -->
   <div class="card">
     <h2>3. 友だち追加画面を出す</h2>
-    <p><code>liff.requestFriendship()</code> を実行して、友だち追加ポップアップを強制起動します [2]。</p>
+    <p><code>liff.requestFriendship()</code> を実行して、友だち追加ポップアップを起動します。</p>
     <button id="btn-request" disabled>友だち追加ポップアップを起動</button>
     <div id="request-status" class="status">結果はここに表示されます</div>
+  </div>
+
+  <!-- 4. ❌が押された（キャンセルされた）場合の限定表示エリア -->
+  <div id="cancel-notice" class="card hidden" style="border: 2px solid #f97316; background-color: #fff7ed;">
+    <h2 style="color: #c2410c;">⚠️ 友だち追加が完了しませんでした</h2>
+    <p>ポップアップが閉じられたか、友だち追加がキャンセルされました。</p>
+    <p>サービスを完全に利用するには友だち追加が必要です。もう一度上のボタンから追加を試すか、下のリンクをご利用ください。</p>
   </div>
 
   <!-- LINE LIFF SDK CDN -->
@@ -131,28 +147,24 @@
     const getStatusEl = document.getElementById("get-status");
     const btnRequest = document.getElementById("btn-request");
     const requestStatusEl = document.getElementById("request-status");
+    const cancelNoticeEl = document.getElementById("cancel-notice");
 
     // ----------------------------------------------------
     // ⚙️ URLパラメータから LIFF ID を動的に引っこ抜く処理
     // ----------------------------------------------------
-    // URLの「?liffid=xxxxxx」の部分を解析します
     const urlParams = new URLSearchParams(window.location.search);
     const paramLiffId = urlParams.get('liffid');
 
-    // もしパラメータにliffidがついていなければ、デフォルトとして「本番用ID」を使います
     const DEFAULT_LIFF_ID = "2010552506-d2NuY6Vo"; 
     const MY_LIFF_ID = paramLiffId ? paramLiffId.trim() : DEFAULT_LIFF_ID;
 
-    // 画面上に、今どのIDで動いているかを表示
     loadedIdEl.innerHTML = `使用中のID: <span class="highlight">${MY_LIFF_ID}</span> ${paramLiffId ? '(URLパラメータから取得)' : '(パラメータなしのためデフォルト本番用を使用)'}`;
 
-    // モニター表示用のエラー表示関数
     function showMonitorError(title, detail) {
       monitorEl.innerHTML = `<strong>【${title}】</strong><br>${detail}`;
       monitorEl.className = "status error";
     }
 
-    // 全体のJavaScriptエラーを強制キャッチ
     window.onerror = function(message, source, lineno, colno, error) {
       showMonitorError("JS実行エラー", `${message}<br><small>場所: ${source} (行: ${lineno}, 文字目: ${colno})</small>`);
       return false;
@@ -162,7 +174,6 @@
       showMonitorError("Promiseエラー", event.reason ? (event.reason.message || event.reason) : "非同期エラーが発生しました");
     };
 
-    // DOM読み込み時の file:// 起動チェック
     document.addEventListener("DOMContentLoaded", () => {
       if (window.location.protocol === 'file:') {
         showMonitorError("動作環境エラー", "ローカルファイルを直接ダブルクリックして開いています。GitHub Pages等にアップロードしてからアクセスしてください。");
@@ -179,14 +190,13 @@
         monitorEl.textContent = "正常に稼働中。エラーはありません。";
         monitorEl.className = "status success";
 
-        // ボタンの有効化
         btnGet.disabled = false;
         btnRequest.disabled = false;
       })
       .catch((err) => {
         initStatusEl.textContent = "初期化失敗: " + err.code + " - " + err.message;
         initStatusEl.className = "status error";
-        showMonitorError("liff.init() 失敗", `コード: ${err.code}<br>メッセージ: ${err.message}<br><br>※URLのパラメータ後ろに余計な文字やスペース、古いキャッシュが残っていないかご確認ください。`);
+        showMonitorError("liff.init() 失敗", `コード: ${err.code}<br>メッセージ: ${err.message}`);
       });
 
     // 1. 友だち状態の確認
@@ -199,6 +209,7 @@
           if (data.friendFlag) {
             getStatusEl.textContent = "友だちです！ (friendFlag: true)";
             getStatusEl.className = "status success";
+            cancelNoticeEl.classList.add("hidden"); // 追加されていればキャンセル表示を消す
           } else {
             getStatusEl.textContent = "友だちではない、またはブロックされています (friendFlag: false)";
             getStatusEl.className = "status error";
@@ -210,15 +221,31 @@
         });
     });
 
-    // 2. 友だち追加ポップアップを起動
+    // 2. 友だち追加ポップアップ起動 & キャンセル判定処理
     btnRequest.addEventListener("click", () => {
-      requestStatusEl.textContent = "起動中...";
+      requestStatusEl.textContent = "ポップアップを起動中...";
       requestStatusEl.className = "status";
+      cancelNoticeEl.classList.add("hidden"); // 状態リセット
 
       liff.requestFriendship()
         .then(() => {
-          requestStatusEl.textContent = "ポップアップ処理が終了しました。もう一度、上の「友だち状態をチェックする」ボタンを押して最新状態を再確認してください。";
-          requestStatusEl.className = "status success";
+          // ポップアップが閉じられた後、最新の友だち状態を自動チェック
+          return liff.getFriendship();
+        })
+        .then((data) => {
+          if (data.friendFlag) {
+            // ✅ 友だち追加に成功した場合
+            requestStatusEl.textContent = "🎉 友だち追加が完了しました！ありがとうございます！";
+            requestStatusEl.className = "status success";
+            cancelNoticeEl.classList.add("hidden");
+          } else {
+            // ❌ ❌ボタンで閉じられた／追加されなかった場合
+            requestStatusEl.textContent = "❌ ポップアップが閉じる（または追加が完了しませんでした）。";
+            requestStatusEl.className = "status warning";
+            
+            // 別なコンテンツ・通知エリアを表示する
+            cancelNoticeEl.classList.remove("hidden");
+          }
         })
         .catch((err) => {
           requestStatusEl.className = "status error";
