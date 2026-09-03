@@ -128,8 +128,8 @@
     <h2>対象のLINE公式アカウントを選択</h2>
     <p>追加・確認を行いたいアカウントを以下から選択してください。</p>
     <select id="bot-select">
-      <option value="410craoz">rimamuraOA (@410craoz)</option>
-      <option value="747ltofe">rimamuraSTORE (@747ltofe)</option>
+      <option value="@410craoz">rimamuraOA (@410craoz)</option>
+      <option value="@747ltofe">rimamuraSTORE (@747ltofe)</option>
     </select>
   </div>
 
@@ -221,7 +221,7 @@
 
     // 1. 選択されたボットの友だち状態の確認
     btnGet.addEventListener("click", () => {
-      const selectedBotId = botSelectEl.value; // 選択中の botId（@を除いた文字列）
+      const selectedBotId = botSelectEl.value; // 例: "@410craoz"
       getStatusEl.textContent = `[${selectedBotId}] の状態を確認中...`;
       getStatusEl.className = "status";
 
@@ -244,7 +244,7 @@
 
     // 2. 選択されたボットの友だち追加ポップアップ起動 & キャンセル判定処理
     btnRequest.addEventListener("click", () => {
-      const selectedBotId = botSelectEl.value; // 選択中の botId（@を除いた文字列）
+      const selectedBotId = botSelectEl.value; // 例: "@410craoz"
       requestStatusEl.textContent = `[${selectedBotId}] のポップアップを起動中...`;
       requestStatusEl.className = "status";
       cancelNoticeEl.classList.add("hidden");
@@ -254,6 +254,7 @@
         return;
       }
 
+      // ドキュメント準拠で { botId: '@xxx' } 形式で渡す
       liff.requestFriendship({ botId: selectedBotId })
         .then(() => {
           // ポップアップ終了後、該当 botId の最新状態をチェック
