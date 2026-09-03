@@ -28,6 +28,15 @@
       color: #4b5563;
       line-height: 1.4;
     }
+    select {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      margin-bottom: 12px;
+      background-color: #fff;
+    }
     button {
       background-color: #06C755; /* LINE Green */
       color: white;
@@ -114,10 +123,20 @@
     <div id="init-status" class="status">初期化中...</div>
   </div>
 
+  <!-- 🎯 アカウント選択エリア -->
+  <div class="card" style="border: 2px solid #06C755;">
+    <h2>対象のLINE公式アカウントを選択</h2>
+    <p>追加・確認を行いたいアカウントを以下から選択してください。</p>
+    <select id="bot-select">
+      <option value="410craoz">rimamuraOA (@410craoz)</option>
+      <option value="747ltofe">rimamuraSTORE (@747ltofe)</option>
+    </select>
+  </div>
+
   <!-- 2. liff.getFriendship() -->
   <div class="card">
     <h2>2. 友だちかどうか確認</h2>
-    <p><code>liff.getFriendship()</code> を実行して、現在の友だち関係を取得します。</p>
+    <p>選択したアカウントに対して <code>liff.getFriendship({ botId })</code> を実行します。</p>
     <button id="btn-get" disabled>友だち状態をチェックする</button>
     <div id="get-status" class="status">結果はここに表示されます</div>
   </div>
@@ -125,7 +144,7 @@
   <!-- 3. liff.requestFriendship() -->
   <div class="card">
     <h2>3. 友だち追加画面を出す！</h2>
-    <p><code>liff.requestFriendship()</code> を実行して、友だち追加ポップアップを起動します。</p>
+    <p>選択したアカウントに対して <code>liff.requestFriendship({ botId })</code> を実行します。</p>
     <button id="btn-request" disabled>友だち追加ポップアップを起動</button>
     <div id="request-status" class="status">結果はここに表示されます</div>
   </div>
@@ -143,6 +162,7 @@
     const monitorEl = document.getElementById("debug-monitor");
     const loadedIdEl = document.getElementById("loaded-liff-id");
     const initStatusEl = document.getElementById("init-status");
+    const botSelectEl = document.getElementById("bot-select");
     const btnGet = document.getElementById("btn-get");
     const getStatusEl = document.getElementById("get-status");
     const btnRequest = document.getElementById("btn-request");
@@ -199,19 +219,20 @@
         showMonitorError("liff.init() 失敗", `コード: ${err.code}<br>メッセージ: ${err.message}`);
       });
 
-    // 1. 友だち状態の確認
+    // 1. 選択されたボットの友だち状態の確認
     btnGet.addEventListener("click", () => {
-      getStatusEl.textContent = "確認中...";
+      const selectedBotId = botSelectEl.value; // 選択中の botId（@を除いた文字列）
+      getStatusEl.textContent = `[${selectedBotId}] の状態を確認中...`;
       getStatusEl.className = "status";
 
-      liff.getFriendship()
+      liff.getFriendship({ botId: selectedBotId })
         .then((data) => {
           if (data.friendFlag) {
-            getStatusEl.textContent = "友だちです！ (friendFlag: true)";
+            getStatusEl.textContent = `【${selectedBotId}】 友だちです！ (friendFlag: true)`;
             getStatusEl.className = "status success";
-            cancelNoticeEl.classList.add("hidden"); // 追加されていればキャンセル表示を消す
+            cancelNoticeEl.classList.add("hidden");
           } else {
-            getStatusEl.textContent = "友だちではない、またはブロックされています (friendFlag: false)";
+            getStatusEl.textContent = `【${selectedBotId}】 友だちではない、またはブロックされています (friendFlag: false)`;
             getStatusEl.className = "status error";
           }
         })
@@ -221,36 +242,40 @@
         });
     });
 
-    // 2. 友だち追加ポップアップ起動 & キャンセル判定処理
+    // 2. 選択されたボットの友だち追加ポップアップ起動 & キャンセル判定処理
     btnRequest.addEventListener("click", () => {
-      requestStatusEl.textContent = "ポップアップを起動中...";
+      const selectedBotId = botSelectEl.value; // 選択中の botId（@を除いた文字列）
+      requestStatusEl.textContent = `[${selectedBotId}] のポップアップを起動中...`;
       requestStatusEl.className = "status";
-      cancelNoticeEl.classList.add("hidden"); // 状態リセット
+      cancelNoticeEl.classList.add("hidden");
 
-      liff.requestFriendship()
+      if (!liff.isLoggedIn()) {
+        liff.login();
+        return;
+      }
+
+      liff.requestFriendship({ botId: selectedBotId })
         .then(() => {
-          // ポップアップが閉じられた後、最新の友だち状態を自動チェック
-          return liff.getFriendship();
+          // ポップアップ終了後、該当 botId の最新状態をチェック
+          return liff.getFriendship({ botId: selectedBotId });
         })
         .then((data) => {
           if (data.friendFlag) {
-            // ✅ 友だち追加に成功した場合
-            requestStatusEl.textContent = "🎉 友だち追加が完了しました！ありがとうございます！";
+            requestStatusEl.textContent = `🎉 【${selectedBotId}】 友だち追加が完了しました！ありがとうございます！`;
             requestStatusEl.className = "status success";
             cancelNoticeEl.classList.add("hidden");
           } else {
-            // ❌ ❌ボタンで閉じられた／追加されなかった場合
-            requestStatusEl.textContent = "❌ ポップアップが閉じる（または追加が完了しませんでした）。";
+            requestStatusEl.textContent = `❌ 【${selectedBotId}】 ポップアップが閉じる（または追加が完了しませんでした）。`;
             requestStatusEl.className = "status warning";
-            
-            // 別なコンテンツ・通知エリアを表示する
             cancelNoticeEl.classList.remove("hidden");
           }
         })
         .catch((err) => {
           requestStatusEl.className = "status error";
-          if (err.code === 'FORBIDDEN') {
-            requestStatusEl.textContent = "エラー (FORBIDDEN)\n考えられる原因:\n・LIFFアプリの画面サイズ設定が「Full」になっていません。\n・LINE公式アカウントがチャネルに正しくリンクされていません。";
+          if (err.message && err.message.includes("no login bot linked")) {
+            requestStatusEl.textContent = "エラー: LINE Developersコンソール側で該当ボットが登録・紐付けされていません。";
+          } else if (err.code === 'FORBIDDEN') {
+            requestStatusEl.textContent = "エラー (FORBIDDEN)\n考えられる原因:\n・LIFFアプリの画面サイズ設定が「Full」になっていません。\n・LINE公式アカウントが許可リストに登録されていません。";
           } else {
             requestStatusEl.textContent = "エラー: " + err.code + " - " + err.message;
           }
