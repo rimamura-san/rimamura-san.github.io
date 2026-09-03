@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>01LIFF 友だち機能動的ID検証</title>
+
+  <title>LIFF 複数LINE公式アカウント検証</title>
 
   <style>
     body {
@@ -54,7 +55,6 @@
       width: 100%;
       font-weight: bold;
       margin-bottom: 12px;
-      transition: background-color 0.2s;
     }
 
     button:hover {
@@ -103,6 +103,12 @@
       border-color: #fed7aa;
     }
 
+    .info {
+      color: #1d4ed8;
+      background-color: #eff6ff;
+      border-color: #93c5fd;
+    }
+
     .highlight {
       background-color: #fef08a;
       padding: 2px 4px;
@@ -127,8 +133,8 @@
       🛠️ エラーリアルタイム監視モニター
     </h3>
 
-    <div id="debug-monitor" class="status error">
-      エラーは検出されていません。JavaScriptを起動しています。
+    <div id="debug-monitor" class="status">
+      JavaScriptを起動しています。
     </div>
   </div>
 
@@ -136,12 +142,12 @@
     class="card"
     style="border: 1px solid #3b82f6; background-color: #eff6ff;"
   >
-    <h2>現在検出されたLIFF ID</h2>
+    <h2>現在使用しているLIFF ID</h2>
 
     <p>
       URLのパラメータ
       <code>?liffid=xxx</code>
-      から取得したLIFF IDです。
+      があれば、そのLIFF IDを使用します。
     </p>
 
     <div
@@ -162,22 +168,17 @@
     <h2>対象のLINE公式アカウントを選択</h2>
 
     <p>
-      友だち状態の確認・友だち追加を行いたいLINE公式アカウントを
-      選択してください。
+      「デフォルトOA」を選択すると、対象OAを指定せずにメソッドを実行します。
     </p>
 
     <select id="bot-select">
-      <option value="@410craoz">
-        rimamuraOA（@410craoz）
-      </option>
-
-      <option value="@747ltofe">
-        rimamuraSTORE（@747ltofe）
-      </option>
+      <option value="">デフォルトOA（IDを指定しない）</option>
+      <option value="@410craoz">rimamuraOA（@410craoz）</option>
+      <option value="@747ltofe">rimamuraSTORE（@747ltofe）</option>
     </select>
 
-    <div id="selected-account" class="status">
-      選択中：@410craoz
+    <div id="selected-account" class="status info">
+      選択中：デフォルトOA（IDを指定しない）
     </div>
   </div>
 
@@ -185,9 +186,15 @@
     <h2>2. 友だち状態を確認</h2>
 
     <p>
-      選択したLINE公式アカウントに対して
-      <code>liff.getFriendship({ officialAccountId })</code>
-      を実行します。
+      デフォルトOAの場合は
+      <code>liff.getFriendship()</code>
+      を引数なしで実行します。
+    </p>
+
+    <p>
+      個別のOAの場合は
+      <code>officialAccountId</code>
+      を指定します。
     </p>
 
     <button id="btn-get" disabled>
@@ -195,7 +202,7 @@
     </button>
 
     <div id="get-status" class="status">
-      結果はここに表示されます
+      結果はここに表示されます。
     </div>
   </div>
 
@@ -203,9 +210,15 @@
     <h2>3. 友だち追加画面を表示</h2>
 
     <p>
-      選択したLINE公式アカウントに対して
-      <code>liff.requestFriendship({ officialAccount })</code>
-      を実行します。
+      デフォルトOAの場合は
+      <code>liff.requestFriendship()</code>
+      を引数なしで実行します。
+    </p>
+
+    <p>
+      個別のOAの場合は
+      <code>officialAccount.id</code>
+      を指定します。
     </p>
 
     <button id="btn-request" disabled>
@@ -213,7 +226,7 @@
     </button>
 
     <div id="request-status" class="status">
-      結果はここに表示されます
+      結果はここに表示されます。
     </div>
   </div>
 
@@ -227,7 +240,7 @@
     </h2>
 
     <p>
-      友だち追加画面が閉じられましたが、選択したLINE公式アカウントは
+      友だち追加画面は閉じられましたが、対象のLINE公式アカウントは
       友だち追加されていません。
     </p>
 
@@ -236,7 +249,7 @@
     </p>
   </div>
 
-  <!-- LIFF SDK -->
+  <!-- LIFF SDK v2の最新版を読み込む -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
   <script>
@@ -245,15 +258,18 @@
     const initStatusEl = document.getElementById("init-status");
 
     const botSelectEl = document.getElementById("bot-select");
-    const selectedAccountEl = document.getElementById("selected-account");
+    const selectedAccountEl =
+      document.getElementById("selected-account");
 
     const btnGet = document.getElementById("btn-get");
     const getStatusEl = document.getElementById("get-status");
 
     const btnRequest = document.getElementById("btn-request");
-    const requestStatusEl = document.getElementById("request-status");
+    const requestStatusEl =
+      document.getElementById("request-status");
 
-    const cancelNoticeEl = document.getElementById("cancel-notice");
+    const cancelNoticeEl =
+      document.getElementById("cancel-notice");
 
     /*
      * URLパラメータからLIFF IDを取得
@@ -261,22 +277,34 @@
      * 例：
      * https://example.com/?liffid=1234567890-AbCdEfGh
      */
-    const urlParams = new URLSearchParams(window.location.search);
+    const urlParams =
+      new URLSearchParams(window.location.search);
+
     const paramLiffId = urlParams.get("liffid");
 
-    const DEFAULT_LIFF_ID = "2010552506-d2NuY6Vo";
+    const DEFAULT_LIFF_ID =
+      "2010552506-d2NuY6Vo";
 
     const MY_LIFF_ID = paramLiffId
       ? paramLiffId.trim()
       : DEFAULT_LIFF_ID;
 
     loadedIdEl.innerHTML =
-      `使用中のID: <span class="highlight">${MY_LIFF_ID}</span> ` +
+      `使用中のLIFF ID：` +
+      `<span class="highlight">${MY_LIFF_ID}</span> ` +
       (
         paramLiffId
           ? "（URLパラメータから取得）"
-          : "（パラメータがないためデフォルト値を使用）"
+          : "（デフォルト値を使用）"
       );
+
+    /*
+     * 選択値が空の場合は「デフォルトOA」として表示する
+     */
+    function getTargetLabel(officialAccountId) {
+      return officialAccountId ||
+        "デフォルトOA（IDを指定しない）";
+    }
 
     function showMonitorError(title, detail) {
       monitorEl.innerHTML =
@@ -296,17 +324,68 @@
       return `${code} - ${message}`;
     }
 
+    /*
+     * 選択中のOAに対してgetFriendship()を実行する
+     *
+     * officialAccountIdが空の場合は引数を渡さず、
+     * デフォルトOAの友だち状態を取得する
+     */
+    async function getSelectedFriendship(
+      officialAccountId
+    ) {
+      if (officialAccountId) {
+        return await liff.getFriendship({
+          officialAccountId: officialAccountId
+        });
+      }
+
+      return await liff.getFriendship();
+    }
+
+    /*
+     * 選択中のOAに対してrequestFriendship()を実行する
+     *
+     * officialAccountIdが空の場合は引数を渡さず、
+     * デフォルトOAの友だち追加画面を表示する
+     */
+    async function requestSelectedFriendship(
+      officialAccountId
+    ) {
+      if (officialAccountId) {
+        return await liff.requestFriendship({
+          officialAccount: {
+            id: officialAccountId,
+
+            /*
+             * テストではフォールバックを無効にする。
+             *
+             * 指定したOAが存在しない、または許可リストにない場合、
+             * デフォルトOAを表示せず、エラーにする。
+             */
+            fallback: false
+          }
+        });
+      }
+
+      /*
+       * officialAccountを指定しない場合、
+       * デフォルトOAが表示される
+       */
+      return await liff.requestFriendship();
+    }
+
     window.onerror = function (
       message,
       source,
-      lineno,
-      colno,
-      error
+      lineNumber,
+      columnNumber
     ) {
       showMonitorError(
         "JavaScript実行エラー",
         `${message}<br>` +
-        `<small>${source}（行：${lineno}、文字：${colno}）</small>`
+        `<small>${source} ` +
+        `（行：${lineNumber}、文字：${columnNumber}）` +
+        `</small>`
       );
 
       return false;
@@ -320,27 +399,38 @@
       showMonitorError("Promiseエラー", reason);
     };
 
-    document.addEventListener("DOMContentLoaded", () => {
-      if (window.location.protocol === "file:") {
-        showMonitorError(
-          "動作環境エラー",
-          "ローカルファイルを直接開いています。" +
-          "GitHub PagesなどのWebサーバーに配置してアクセスしてください。"
-        );
+    document.addEventListener(
+      "DOMContentLoaded",
+      () => {
+        if (window.location.protocol === "file:") {
+          showMonitorError(
+            "動作環境エラー",
+            "ローカルファイルを直接開いています。" +
+            "GitHub PagesなどのWebサーバーに配置して" +
+            "アクセスしてください。"
+          );
+        }
       }
-    });
+    );
 
+    /*
+     * 選択したOAが変更されたときの表示
+     */
     botSelectEl.addEventListener("change", () => {
+      const selectedBotId = botSelectEl.value;
+      const targetLabel =
+        getTargetLabel(selectedBotId);
+
       selectedAccountEl.textContent =
-        `選択中：${botSelectEl.value}`;
+        `選択中：${targetLabel}`;
 
       getStatusEl.textContent =
-        "選択したLINE公式アカウントの状態を確認できます。";
+        `${targetLabel}の友だち状態を確認できます。`;
 
       getStatusEl.className = "status";
 
       requestStatusEl.textContent =
-        "選択したLINE公式アカウントの友だち追加画面を表示できます。";
+        `${targetLabel}の友だち追加画面を表示できます。`;
 
       requestStatusEl.className = "status";
 
@@ -348,10 +438,9 @@
     });
 
     /*
-     * LIFFの初期化
+     * LIFF初期化
      *
-     * 複数OAの指定にはLIFF SDK v2.30.0以上が必要です。
-     * edge/2を読み込んでいるため、最新のv2系SDKが使用されます。
+     * 複数OAの指定にはLIFF SDK v2.30.0以上が必要
      */
     liff.init({
       liffId: MY_LIFF_ID
@@ -364,12 +453,14 @@
           `LINEアプリ内：${liff.isInClient()}\n` +
           `ログイン済み：${liff.isLoggedIn()}`;
 
-        initStatusEl.className = "status success";
+        initStatusEl.className =
+          "status success";
 
         monitorEl.textContent =
           "正常に稼働中です。エラーはありません。";
 
-        monitorEl.className = "status success";
+        monitorEl.className =
+          "status success";
 
         btnGet.disabled = false;
         btnRequest.disabled = false;
@@ -378,7 +469,8 @@
         initStatusEl.textContent =
           `LIFF初期化失敗：${formatError(error)}`;
 
-        initStatusEl.className = "status error";
+        initStatusEl.className =
+          "status error";
 
         showMonitorError(
           "liff.init()失敗",
@@ -387,168 +479,209 @@
       });
 
     /*
-     * 選択したLINE公式アカウントの友だち状態を確認
-     *
-     * getFriendship()では、officialAccountIdに
-     * ベーシックIDまたはプレミアムIDを指定します。
+     * 友だち状態の確認
      */
-    btnGet.addEventListener("click", async () => {
-      const selectedBotId = botSelectEl.value;
+    btnGet.addEventListener(
+      "click",
+      async () => {
+        const selectedBotId =
+          botSelectEl.value;
 
-      getStatusEl.textContent =
-        `【${selectedBotId}】の状態を確認中...`;
+        const targetLabel =
+          getTargetLabel(selectedBotId);
 
-      getStatusEl.className = "status";
-      cancelNoticeEl.classList.add("hidden");
-
-      if (!liff.isLoggedIn()) {
-        liff.login();
-        return;
-      }
-
-      try {
-        const data = await liff.getFriendship({
-          officialAccountId: selectedBotId
-        });
-
-        if (data.friendFlag) {
-          getStatusEl.textContent =
-            `【${selectedBotId}】は友だちです。\n` +
-            "friendFlag: true";
-
-          getStatusEl.className = "status success";
-        } else {
-          getStatusEl.textContent =
-            `【${selectedBotId}】は友だちではない、` +
-            "またはブロックされています。\n" +
-            "friendFlag: false";
-
-          getStatusEl.className = "status warning";
-        }
-      } catch (error) {
         getStatusEl.textContent =
-          `友だち状態の取得エラー：${formatError(error)}`;
+          `【${targetLabel}】の状態を確認中...`;
 
-        getStatusEl.className = "status error";
+        getStatusEl.className = "status";
+        cancelNoticeEl.classList.add("hidden");
 
-        showMonitorError(
-          "liff.getFriendship()エラー",
-          formatError(error)
-        );
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return;
+        }
+
+        try {
+          const data =
+            await getSelectedFriendship(
+              selectedBotId
+            );
+
+          if (data.friendFlag) {
+            getStatusEl.textContent =
+              `【${targetLabel}】は友だちです。\n` +
+              "friendFlag: true";
+
+            getStatusEl.className =
+              "status success";
+          } else {
+            getStatusEl.textContent =
+              `【${targetLabel}】は友だちではない、` +
+              "またはブロックされています。\n" +
+              "friendFlag: false";
+
+            getStatusEl.className =
+              "status warning";
+          }
+        } catch (error) {
+          getStatusEl.textContent =
+            `友だち状態の取得エラー：` +
+            formatError(error);
+
+          getStatusEl.className =
+            "status error";
+
+          showMonitorError(
+            "liff.getFriendship()エラー",
+            formatError(error)
+          );
+        }
       }
-    });
+    );
 
     /*
-     * 選択したLINE公式アカウントの友だち追加画面を表示
-     *
-     * requestFriendship()では、officialAccount.idに
-     * ベーシックIDまたはプレミアムIDを指定します。
-     *
-     * fallback: false にすることで、指定したOAが存在しない場合や
-     * 許可リストにない場合に、デフォルトOAへ切り替えません。
-     * テスト時の設定ミスを見つけやすくするための指定です。
+     * 友だち追加画面の表示
      */
-    btnRequest.addEventListener("click", async () => {
-      const selectedBotId = botSelectEl.value;
+    btnRequest.addEventListener(
+      "click",
+      async () => {
+        const selectedBotId =
+          botSelectEl.value;
 
-      requestStatusEl.textContent =
-        `【${selectedBotId}】のポップアップを起動中...`;
+        const targetLabel =
+          getTargetLabel(selectedBotId);
 
-      requestStatusEl.className = "status";
-      cancelNoticeEl.classList.add("hidden");
+        requestStatusEl.textContent =
+          `【${targetLabel}】のポップアップを起動中...`;
 
-      if (!liff.isLoggedIn()) {
-        liff.login();
-        return;
-      }
+        requestStatusEl.className = "status";
+        cancelNoticeEl.classList.add("hidden");
 
-      try {
-        await liff.requestFriendship({
-          officialAccount: {
-            id: selectedBotId,
-            fallback: false
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return;
+        }
+
+        try {
+          /*
+           * デフォルトOAの場合は引数なし、
+           * 個別OAの場合はofficialAccountを指定して実行
+           */
+          await requestSelectedFriendship(
+            selectedBotId
+          );
+
+          /*
+           * requestFriendship()の戻り値だけでは、
+           * 友だち追加されたかどうかは判定できない。
+           *
+           * ポップアップが閉じた後に
+           * getFriendship()で確認する。
+           */
+          const data =
+            await getSelectedFriendship(
+              selectedBotId
+            );
+
+          if (data.friendFlag) {
+            requestStatusEl.textContent =
+              `🎉【${targetLabel}】の` +
+              "友だち追加が完了しました！";
+
+            requestStatusEl.className =
+              "status success";
+
+            cancelNoticeEl.classList.add(
+              "hidden"
+            );
+          } else {
+            requestStatusEl.textContent =
+              `【${targetLabel}】は` +
+              "友だち追加されていません。\n" +
+              "ポップアップが閉じられたか、" +
+              "追加が完了しなかった可能性があります。";
+
+            requestStatusEl.className =
+              "status warning";
+
+            cancelNoticeEl.classList.remove(
+              "hidden"
+            );
           }
-        });
+        } catch (error) {
+          const errorText =
+            formatError(error);
 
-        /*
-         * requestFriendship()の戻り値からは、
-         * ユーザーが友だち追加したかどうかを判定できません。
-         *
-         * ポップアップが閉じた後にgetFriendship()を実行して、
-         * 最新の友だち状態を確認します。
-         */
-        const data = await liff.getFriendship({
-          officialAccountId: selectedBotId
-        });
+          const errorMessage =
+            error && error.message
+              ? error.message
+              : "";
 
-        if (data.friendFlag) {
-          requestStatusEl.textContent =
-            `🎉【${selectedBotId}】の友だち追加が完了しました！`;
+          requestStatusEl.className =
+            "status error";
 
-          requestStatusEl.className = "status success";
-          cancelNoticeEl.classList.add("hidden");
-        } else {
-          requestStatusEl.textContent =
-            `【${selectedBotId}】は友だち追加されていません。\n` +
-            "ポップアップが閉じられたか、追加が完了しなかった可能性があります。";
+          if (
+            errorMessage.includes(
+              'officialAccount.id must start with "@"'
+            )
+          ) {
+            requestStatusEl.textContent =
+              "エラー：LINE公式アカウントのIDは、" +
+              "「@」から始まるベーシックIDまたは" +
+              "プレミアムIDを指定してください。";
+          } else if (
+            errorMessage.includes(
+              "No bot could be resolved for the request"
+            )
+          ) {
+            requestStatusEl.textContent =
+              "エラー：表示するLINE公式アカウントを" +
+              "解決できませんでした。\n\n" +
+              "次の点を確認してください。\n" +
+              "・デフォルトOAが設定されているか\n" +
+              "・指定したOAのIDが正しいか\n" +
+              "・指定したOAが許可リストに登録されているか\n" +
+              "・［複数アカウントを使用］がオンになっているか\n" +
+              "・OAが停止または削除されていないか";
+          } else if (
+            errorMessage.includes(
+              "subwindowOpen is not allowed"
+            )
+          ) {
+            requestStatusEl.textContent =
+              "エラー：LIFFアプリの画面サイズが" +
+              "Fullではありません。";
+          } else if (
+            errorMessage.includes(
+              "LOGIN_MULTI_LINKED_BOT_PROMPT"
+            )
+          ) {
+            requestStatusEl.textContent =
+              "エラー：LINEミニアプリチャネルの" +
+              "［複数アカウントを使用］が" +
+              "オンになっていない可能性があります。";
+          } else if (
+            error.code === "FORBIDDEN"
+          ) {
+            requestStatusEl.textContent =
+              "エラー（FORBIDDEN）\n\n" +
+              "次の点を確認してください。\n" +
+              "・画面サイズがFullになっているか\n" +
+              "・［複数アカウントを使用］がオンか\n" +
+              "・対象OAが許可リストに登録されているか";
+          } else {
+            requestStatusEl.textContent =
+              "友だち追加画面の表示エラー：" +
+              errorText;
+          }
 
-          requestStatusEl.className = "status warning";
-          cancelNoticeEl.classList.remove("hidden");
+          showMonitorError(
+            "liff.requestFriendship()エラー",
+            errorText
+          );
         }
-      } catch (error) {
-        const errorText = formatError(error);
-
-        requestStatusEl.className = "status error";
-
-        if (
-          error.message &&
-          error.message.includes(
-            "officialAccount.id must start with"
-          )
-        ) {
-          requestStatusEl.textContent =
-            "エラー：LINE公式アカウントのIDは、" +
-            "「@」から始まるベーシックIDまたはプレミアムIDを指定してください。";
-        } else if (
-          error.message &&
-          error.message.includes(
-            "No bot could be resolved for the request"
-          )
-        ) {
-          requestStatusEl.textContent =
-            "エラー：指定したLINE公式アカウントを表示できませんでした。\n\n" +
-            "次の点を確認してください。\n" +
-            "・指定したIDが正しいか\n" +
-            "・LINE公式アカウントが許可リストに登録されているか\n" +
-            "・［複数アカウントを使用］がオンになっているか\n" +
-            "・LINE公式アカウントが停止または削除されていないか";
-        } else if (
-          error.message &&
-          error.message.includes(
-            "subwindowOpen is not allowed"
-          )
-        ) {
-          requestStatusEl.textContent =
-            "エラー：LIFFアプリの画面サイズがFullではありません。";
-        } else if (error.code === "FORBIDDEN") {
-          requestStatusEl.textContent =
-            "エラー（FORBIDDEN）\n\n" +
-            "次の点を確認してください。\n" +
-            "・LIFFアプリの画面サイズがFullになっているか\n" +
-            "・［複数アカウントを使用］がオンになっているか\n" +
-            "・対象のLINE公式アカウントが許可リストに登録されているか";
-        } else {
-          requestStatusEl.textContent =
-            `友だち追加画面の表示エラー：${errorText}`;
-        }
-
-        showMonitorError(
-          "liff.requestFriendship()エラー",
-          errorText
-        );
       }
-    });
+    );
   </script>
 </body>
 </html>
-```
