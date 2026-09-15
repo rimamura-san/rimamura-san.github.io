@@ -3,14 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>複数OA優先順位テスト</title>
+
+  <title>複数OA導線テスト01</title>
 
   <style>
     body {
-      font-family: sans-serif;
       max-width: 720px;
       margin: auto;
       padding: 20px;
+      font-family: sans-serif;
       background: #f3f4f6;
     }
 
@@ -21,15 +22,11 @@
       background: white;
     }
 
-    select,
     button {
       box-sizing: border-box;
       width: 100%;
       margin: 6px 0;
       padding: 12px;
-    }
-
-    button {
       color: white;
       border: 0;
       border-radius: 6px;
@@ -37,47 +34,53 @@
       font-weight: bold;
     }
 
-    .secondary {
+    button:disabled {
+      background: #9ca3af;
+    }
+
+    .blue {
       background: #2563eb;
+    }
+
+    .orange {
+      background: #ea580c;
     }
 
     pre {
       overflow-wrap: anywhere;
       white-space: pre-wrap;
       padding: 12px;
-      background: #f9fafb;
       border: 1px solid #ddd;
+      background: #f9fafb;
     }
   </style>
 </head>
 
 <body>
-  <h1>複数OAの指定方法テスト</h1>
+  <h1>複数OA導線テスト</h1>
 
   <section>
-    <h2>現在の起動条件</h2>
-    <pre id="startup">確認中...</pre>
+    <h2>指定内容</h2>
+
+    <pre>導線① prompt_bot_id
+@243ygula / hogechanSTORE
+
+導線② permission.requestAll()
+@410craoz / rimamuraOA
+
+導線③ requestFriendship()
+@747ltofe / rimamuraSTORE</pre>
   </section>
 
   <section>
     <h2>導線①：prompt_bot_id</h2>
 
     <p>
-      選択したOAをprompt_bot_idに指定して、
-      ミニアプリを開き直します。
+      hogechanSTOREを指定したURLでミニアプリを開き直します。
     </p>
 
-    <select id="prompt-bot">
-      <option value="@410craoz">
-        rimamuraOA（@410craoz）
-      </option>
-      <option value="@747ltofe">
-        rimamuraSTORE（@747ltofe）
-      </option>
-    </select>
-
     <button id="open-prompt">
-      prompt_bot_id付きで開き直す
+      @243ygulaを指定して開き直す
     </button>
   </section>
 
@@ -85,20 +88,10 @@
     <h2>導線②：permission.requestAll()</h2>
 
     <p>
-      起動時とは異なるOAを選び、権限追加画面で
-      どちらのOAが表示されるか確認します。
+      rimamuraOA（@410craoz）を指定します。
     </p>
 
-    <select id="request-all-bot">
-      <option value="@747ltofe">
-        rimamuraSTORE（@747ltofe）
-      </option>
-      <option value="@410craoz">
-        rimamuraOA（@410craoz）
-      </option>
-    </select>
-
-    <button id="request-all" class="secondary" disabled>
+    <button id="request-all" class="blue" disabled>
       requestAll()を実行
     </button>
   </section>
@@ -106,16 +99,15 @@
   <section>
     <h2>導線③：requestFriendship()</h2>
 
-    <select id="friendship-bot">
-      <option value="@747ltofe">
-        rimamuraSTORE（@747ltofe）
-      </option>
-      <option value="@410craoz">
-        rimamuraOA（@410craoz）
-      </option>
-    </select>
+    <p>
+      rimamuraSTORE（@747ltofe）を指定します。
+    </p>
 
-    <button id="request-friendship" disabled>
+    <button
+      id="request-friendship"
+      class="orange"
+      disabled
+    >
       requestFriendship()を実行
     </button>
   </section>
@@ -130,8 +122,12 @@
   <script>
     const LIFF_ID = "2010552506-d2NuY6Vo";
 
-    const startupEl = document.getElementById("startup");
-    const resultEl = document.getElementById("result");
+    const PROMPT_BOT_ID = "@243ygula";
+    const REQUEST_ALL_BOT_ID = "@410craoz";
+    const FRIENDSHIP_BOT_ID = "@747ltofe";
+
+    const resultEl =
+      document.getElementById("result");
 
     const requestAllButton =
       document.getElementById("request-all");
@@ -142,14 +138,14 @@
     function showResult(message, data) {
       resultEl.textContent =
         message +
-        (data
+        (data !== undefined
           ? "\n\n" + JSON.stringify(data, null, 2)
           : "");
     }
 
     function showError(method, error) {
       showResult(`${method}でエラーが発生しました`, {
-        code: error?.code,
+        code: error?.code || "コードなし",
         message: error?.message || String(error)
       });
     }
@@ -161,11 +157,14 @@
       return params.get("prompt_bot_id");
     }
 
-    function makeMiniAppUrl(botId) {
+    function makePromptUrl() {
       const url =
         new URL(`https://miniapp.line.me/${LIFF_ID}`);
 
-      url.searchParams.set("prompt_bot_id", botId);
+      url.searchParams.set(
+        "prompt_bot_id",
+        PROMPT_BOT_ID
+      );
 
       return url.toString();
     }
@@ -173,35 +172,29 @@
     document
       .getElementById("open-prompt")
       .addEventListener("click", () => {
-        const botId =
-          document.getElementById("prompt-bot").value;
-
-        location.href = makeMiniAppUrl(botId);
+        location.href = makePromptUrl();
       });
 
     requestAllButton.addEventListener(
       "click",
       async () => {
-        const botId =
-          document.getElementById(
-            "request-all-bot"
-          ).value;
-
         showResult(
-          `requestAll()を実行します\n指定OA：${botId}`
+          "permission.requestAll()を実行します\n" +
+          `指定OA：${REQUEST_ALL_BOT_ID}`
         );
 
         try {
           const response =
             await liff.permission.requestAll({
               officialAccount: {
-                id: botId,
+                id: REQUEST_ALL_BOT_ID,
                 fallback: false
               }
             });
 
           showResult(
-            `requestAll()が完了しました\n指定OA：${botId}`,
+            "permission.requestAll()が完了しました\n" +
+            `指定OA：${REQUEST_ALL_BOT_ID}`,
             response
           );
         } catch (error) {
@@ -216,26 +209,23 @@
     requestFriendshipButton.addEventListener(
       "click",
       async () => {
-        const botId =
-          document.getElementById(
-            "friendship-bot"
-          ).value;
-
         showResult(
-          `requestFriendship()を実行します\n指定OA：${botId}`
+          "requestFriendship()を実行します\n" +
+          `指定OA：${FRIENDSHIP_BOT_ID}`
         );
 
         try {
           const response =
             await liff.requestFriendship({
               officialAccount: {
-                id: botId,
+                id: FRIENDSHIP_BOT_ID,
                 fallback: false
               }
             });
 
           showResult(
-            `requestFriendship()が完了しました\n指定OA：${botId}`,
+            "requestFriendship()が完了しました\n" +
+            `指定OA：${FRIENDSHIP_BOT_ID}`,
             response
           );
         } catch (error) {
@@ -248,13 +238,6 @@
     );
 
     async function initialize() {
-      const promptBotId = getPromptBotId();
-
-      startupEl.textContent =
-        `LIFF ID：${LIFF_ID}\n` +
-        `prompt_bot_id：${promptBotId || "指定なし"}\n` +
-        `URL：${location.href}`;
-
       try {
         await liff.init({
           liffId: LIFF_ID
@@ -271,14 +254,17 @@
         requestAllButton.disabled = false;
         requestFriendshipButton.disabled = false;
 
-        showResult(
-          "LIFF初期化成功",
-          {
-            liffVersion: liff.getVersion(),
-            isInClient: liff.isInClient(),
-            promptBotId
-          }
-        );
+        showResult("LIFF初期化成功", {
+          liffId: LIFF_ID,
+          promptBotId:
+            getPromptBotId() || "指定なし",
+          requestAllBotId:
+            REQUEST_ALL_BOT_ID,
+          requestFriendshipBotId:
+            FRIENDSHIP_BOT_ID,
+          liffVersion: liff.getVersion(),
+          isInClient: liff.isInClient()
+        });
       } catch (error) {
         showError("liff.init()", error);
       }
