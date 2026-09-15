@@ -2,9 +2,10 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
 
-  <title>複数OA導線テスト</title>
+  <title>複数OAテスト00</title>
 
   <style>
     body {
@@ -46,12 +47,22 @@
       background: #ea580c;
     }
 
+    .gray {
+      background: #4b5563;
+    }
+
     pre {
       overflow-wrap: anywhere;
       white-space: pre-wrap;
       padding: 12px;
       border: 1px solid #ddd;
       background: #f9fafb;
+    }
+
+    .notice {
+      color: #9a3412;
+      border: 1px solid #fdba74;
+      background: #fff7ed;
     }
   </style>
 </head>
@@ -60,102 +71,134 @@
   <h1>複数OA導線テスト</h1>
 
   <section>
-    <h2>テストするOA</h2>
+    <h2>対象OA</h2>
 
-    <pre>導線① 初回同意画面
-デフォルトOA
+    <pre>デフォルトOA
 @243ygula / hogechanSTORE
 
-導線② permission.requestAll()
+2つ目のOA
 @410craoz / rimamuraOA
 
-導線③ requestFriendship()
+3つ目のOA
 @747ltofe / rimamuraSTORE</pre>
   </section>
 
-  <section>
-    <h2>導線①：デフォルトOA</h2>
+  <section class="notice">
+    <h2>テスト時の注意</h2>
 
     <p>
-      prompt_bot_idを付けずにミニアプリを開きます。
-      初回同意画面ではデフォルトOAが表示されます。
+      2つのrequestAll()は続けてテストできません。
+      1回目でprofileを許可した後は、2回目に要求する権限が
+      残っていないためです。
     </p>
 
-    <button id="open-miniapp">
-      デフォルトOAでミニアプリを開く
+    <p>
+      検証Aの後に連動アプリを解除してから、
+      検証Bを実施してください。
+    </p>
+  </section>
+
+  <section>
+    <h2>現在の権限状態</h2>
+
+    <button id="check-permission"
+            class="gray"
+            disabled>
+      profileの権限状態を確認
+    </button>
+
+    <pre id="permission-result">
+確認前
+    </pre>
+  </section>
+
+  <section>
+    <h2>検証A：デフォルトOA</h2>
+
+    <p>
+      引数なしでrequestAll()を実行します。
+      アクセス許可要求画面にデフォルトOAの
+      @243ygulaが表示されるか確認してください。
+    </p>
+
+    <button id="request-default"
+            disabled>
+      requestAll()を引数なしで実行
+    </button>
+
+    <button id="check-default"
+            class="gray"
+            disabled>
+      デフォルトOAの友だち状態を確認
     </button>
   </section>
 
   <section>
-    <h2>導線②：permission.requestAll()</h2>
+    <h2>検証B：2つ目のOA</h2>
 
     <p>
-      未同意のScopeを追加取得する画面で、
-      rimamuraOA（@410craoz）を指定します。
+      @410craozを指定してrequestAll()を実行します。
+      検証Aの後に試す場合は、先に連動を解除してください。
     </p>
 
-    <button id="request-all" class="blue" disabled>
-      requestAll()を実行
+    <button id="request-second"
+            class="blue"
+            disabled>
+      OA指定ありでrequestAll()を実行
+    </button>
+
+    <button id="check-second"
+            class="gray"
+            disabled>
+      2つ目のOAの友だち状態を確認
     </button>
   </section>
 
   <section>
-    <h2>導線③：requestFriendship()</h2>
+    <h2>検証C：3つ目のOA</h2>
 
     <p>
-      友だち追加画面で、
-      rimamuraSTORE（@747ltofe）を指定します。
+      requestFriendship()で
+      @747ltofeを指定します。
     </p>
 
-    <button
-      id="request-friendship"
-      class="orange"
-      disabled
-    >
+    <button id="request-third"
+            class="orange"
+            disabled>
       requestFriendship()を実行
     </button>
+
+    <button id="check-third"
+            class="gray"
+            disabled>
+      3つ目のOAの友だち状態を確認
+    </button>
   </section>
 
   <section>
-    <h2>現在の状態・実行結果</h2>
-    <pre id="result">LIFFを初期化しています...</pre>
+    <h2>実行結果</h2>
+    <pre id="result">
+LIFFを初期化しています...
+    </pre>
   </section>
 
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
   <script>
-    /*
-     * 使用するLIFF ID
-     */
     const LIFF_ID = "2010552506-d2NuY6Vo";
 
-    /*
-     * 1つ目はLINE Developersコンソールで設定済みの
-     * デフォルトOAを使用するため、コードでは指定しない
-     */
-    const DEFAULT_BOT_ID = "@243ygula";
-
-    /*
-     * 2つ目：requestAll()で表示するOA
-     */
-    const REQUEST_ALL_BOT_ID = "@410craoz";
-
-    /*
-     * 3つ目：requestFriendship()で表示するOA
-     */
-    const FRIENDSHIP_BOT_ID = "@747ltofe";
+    const DEFAULT_OA = "@243ygula";
+    const SECOND_OA = "@410craoz";
+    const THIRD_OA = "@747ltofe";
 
     const resultEl =
       document.getElementById("result");
 
-    const openMiniAppButton =
-      document.getElementById("open-miniapp");
+    const permissionResultEl =
+      document.getElementById("permission-result");
 
-    const requestAllButton =
-      document.getElementById("request-all");
-
-    const requestFriendshipButton =
-      document.getElementById("request-friendship");
+    const buttons =
+      document.querySelectorAll("button");
 
     function showResult(message, data) {
       resultEl.textContent =
@@ -172,112 +215,238 @@
         `${method}でエラーが発生しました`,
         {
           code: error?.code || "コードなし",
-          message:
-            error?.message || String(error)
+          message: error?.message || String(error)
         }
       );
     }
 
-    /*
-     * prompt_bot_idを付けないミニアプリURL
-     */
-    function getMiniAppUrl() {
-      return `https://miniapp.line.me/${LIFF_ID}`;
+    async function getProfilePermission() {
+      const status =
+        await liff.permission.query("profile");
+
+      permissionResultEl.textContent =
+        JSON.stringify(status, null, 2);
+
+      return status;
     }
 
-    /*
-     * デフォルトOAを使ってミニアプリを開く
-     */
-    openMiniAppButton.addEventListener(
-      "click",
-      () => {
-        location.href = getMiniAppUrl();
+    async function getFriendship(oaId) {
+      if (!oaId) {
+        return await liff.getFriendship();
       }
-    );
 
-    /*
-     * 2つ目のOAを指定してrequestAll()を実行
-     */
-    requestAllButton.addEventListener(
-      "click",
-      async () => {
-        if (!liff.isInClient()) {
-          showResult(
-            "LINEアプリ内で実行してください。"
-          );
+      return await liff.getFriendship({
+        officialAccountId: oaId
+      });
+    }
 
-          return;
-        }
+    async function checkFriendship(
+      oaId,
+      label
+    ) {
+      try {
+        const data =
+          await getFriendship(oaId);
 
         showResult(
-          "permission.requestAll()を実行します。\n" +
-          `指定OA：${REQUEST_ALL_BOT_ID}`
+          `${label}の友だち状態`,
+          data
         );
+      } catch (error) {
+        showError(
+          `${label}のgetFriendship()`,
+          error
+        );
+      }
+    }
 
+    document
+      .getElementById("check-permission")
+      .addEventListener("click", async () => {
         try {
+          const status =
+            await getProfilePermission();
+
+          showResult(
+            "profileの権限状態",
+            status
+          );
+        } catch (error) {
+          showError(
+            "liff.permission.query()",
+            error
+          );
+        }
+      });
+
+    /*
+     * 検証A
+     * 引数なし＝デフォルトOA
+     */
+    document
+      .getElementById("request-default")
+      .addEventListener("click", async () => {
+        try {
+          const status =
+            await getProfilePermission();
+
+          if (status.state !== "prompt") {
+            showResult(
+              "未同意のprofile権限がありません。" +
+              "\n連動アプリを解除してから再度お試しください。",
+              status
+            );
+
+            return;
+          }
+
+          showResult(
+            "引数なしでrequestAll()を実行します。" +
+            `\n想定OA：${DEFAULT_OA}`
+          );
+
+          const response =
+            await liff.permission.requestAll();
+
+          const friendship =
+            await getFriendship();
+
+          showResult(
+            "引数なしrequestAll()の実行結果",
+            {
+              response,
+              expectedOA: DEFAULT_OA,
+              friendship
+            }
+          );
+        } catch (error) {
+          showError(
+            "引数なしrequestAll()",
+            error
+          );
+        }
+      });
+
+    /*
+     * 検証B
+     * 2つ目のOAを指定
+     */
+    document
+      .getElementById("request-second")
+      .addEventListener("click", async () => {
+        try {
+          const status =
+            await getProfilePermission();
+
+          if (status.state !== "prompt") {
+            showResult(
+              "未同意のprofile権限がありません。" +
+              "\n検証Aを実行済みの場合は、" +
+              "連動アプリを解除してから再度お試しください。",
+              status
+            );
+
+            return;
+          }
+
+          showResult(
+            "OA指定ありでrequestAll()を実行します。" +
+            `\n指定OA：${SECOND_OA}`
+          );
+
           const response =
             await liff.permission.requestAll({
               officialAccount: {
-                id: REQUEST_ALL_BOT_ID,
+                id: SECOND_OA,
                 fallback: false
               }
             });
 
+          const friendship =
+            await getFriendship(SECOND_OA);
+
           showResult(
-            "permission.requestAll()が完了しました。\n" +
-            `指定OA：${REQUEST_ALL_BOT_ID}`,
-            response
+            "OA指定ありrequestAll()の実行結果",
+            {
+              response,
+              specifiedOA: SECOND_OA,
+              friendship
+            }
           );
         } catch (error) {
           showError(
-            "liff.permission.requestAll()",
+            "OA指定ありrequestAll()",
             error
           );
         }
-      }
-    );
+      });
 
     /*
-     * 3つ目のOAを指定してrequestFriendship()を実行
+     * 検証C
+     * 3つ目のOAを指定
      */
-    requestFriendshipButton.addEventListener(
-      "click",
-      async () => {
-        if (!liff.isInClient()) {
+    document
+      .getElementById("request-third")
+      .addEventListener("click", async () => {
+        try {
           showResult(
-            "LINEアプリ内で実行してください。"
+            "requestFriendship()を実行します。" +
+            `\n指定OA：${THIRD_OA}`
           );
 
-          return;
-        }
-
-        showResult(
-          "requestFriendship()を実行します。\n" +
-          `指定OA：${FRIENDSHIP_BOT_ID}`
-        );
-
-        try {
           const response =
             await liff.requestFriendship({
               officialAccount: {
-                id: FRIENDSHIP_BOT_ID,
+                id: THIRD_OA,
                 fallback: false
               }
             });
 
+          const friendship =
+            await getFriendship(THIRD_OA);
+
           showResult(
-            "requestFriendship()が完了しました。\n" +
-            `指定OA：${FRIENDSHIP_BOT_ID}`,
-            response
+            "requestFriendship()の実行結果",
+            {
+              response,
+              specifiedOA: THIRD_OA,
+              friendship
+            }
           );
         } catch (error) {
           showError(
-            "liff.requestFriendship()",
+            "requestFriendship()",
             error
           );
         }
-      }
-    );
+      });
+
+    document
+      .getElementById("check-default")
+      .addEventListener("click", () => {
+        checkFriendship(
+          null,
+          `デフォルトOA（${DEFAULT_OA}）`
+        );
+      });
+
+    document
+      .getElementById("check-second")
+      .addEventListener("click", () => {
+        checkFriendship(
+          SECOND_OA,
+          `2つ目のOA（${SECOND_OA}）`
+        );
+      });
+
+    document
+      .getElementById("check-third")
+      .addEventListener("click", () => {
+        checkFriendship(
+          THIRD_OA,
+          `3つ目のOA（${THIRD_OA}）`
+        );
+      });
 
     async function initialize() {
       try {
@@ -285,9 +454,6 @@
           liffId: LIFF_ID
         });
 
-        /*
-         * 外部ブラウザの場合はログインする
-         */
         if (!liff.isLoggedIn()) {
           liff.login({
             redirectUri: location.href
@@ -296,29 +462,24 @@
           return;
         }
 
-        /*
-         * ミニアプリ内に入ったら②と③を押せるようにする
-         */
-        if (liff.isInClient()) {
-          requestAllButton.disabled = false;
-          requestFriendshipButton.disabled = false;
-        }
+        buttons.forEach((button) => {
+          button.disabled = false;
+        });
+
+        const profilePermission =
+          await getProfilePermission();
 
         showResult(
           "LIFF初期化成功",
           {
             liffId: LIFF_ID,
-            lineAppInside: liff.isInClient(),
-            loggedIn: liff.isLoggedIn(),
+            isInClient: liff.isInClient(),
+            isLoggedIn: liff.isLoggedIn(),
             liffVersion: liff.getVersion(),
-
-            firstDefaultOA: DEFAULT_BOT_ID,
-            secondRequestAllOA:
-              REQUEST_ALL_BOT_ID,
-            thirdRequestFriendshipOA:
-              FRIENDSHIP_BOT_ID,
-
-            currentUrl: location.href
+            profilePermission,
+            defaultOA: DEFAULT_OA,
+            secondOA: SECOND_OA,
+            thirdOA: THIRD_OA
           }
         );
       } catch (error) {
