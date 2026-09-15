@@ -2,185 +2,194 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
-  <title>複数OAテスト00</title>
+  <title>LINEミニアプリ 複数OA検証</title>
 
   <style>
     body {
-      max-width: 720px;
-      margin: auto;
-      padding: 20px;
-      font-family: sans-serif;
-      background: #f3f4f6;
+      margin: 0;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      color: #222;
+      background: #f4f5f7;
     }
 
-    section {
-      margin-bottom: 16px;
+    h1 {
+      font-size: 22px;
+    }
+
+    h2 {
+      margin-top: 0;
+      font-size: 18px;
+    }
+
+    .card {
       padding: 16px;
+      margin-bottom: 16px;
+      background: #fff;
       border-radius: 10px;
-      background: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
 
     button {
-      box-sizing: border-box;
       width: 100%;
+      padding: 13px;
       margin: 6px 0;
-      padding: 12px;
-      color: white;
-      border: 0;
-      border-radius: 6px;
-      background: #06c755;
+      color: #fff;
+      font-size: 15px;
       font-weight: bold;
+      background: #06c755;
+      border: 0;
+      border-radius: 7px;
+      cursor: pointer;
     }
 
     button:disabled {
-      background: #9ca3af;
+      background: #aaa;
+      cursor: not-allowed;
     }
 
-    .blue {
-      background: #2563eb;
-    }
-
-    .orange {
-      background: #ea580c;
-    }
-
-    .gray {
-      background: #4b5563;
-    }
-
-    pre {
-      overflow-wrap: anywhere;
+    .status {
+      padding: 10px;
+      margin-top: 10px;
+      font-family: monospace;
+      font-size: 13px;
+      line-height: 1.5;
       white-space: pre-wrap;
-      padding: 12px;
+      word-break: break-all;
+      background: #f8fafc;
       border: 1px solid #ddd;
-      background: #f9fafb;
+      border-radius: 6px;
     }
 
-    .notice {
+    .success {
+      color: #166534;
+      background: #f0fdf4;
+      border-color: #86efac;
+    }
+
+    .error {
+      color: #991b1b;
+      background: #fef2f2;
+      border-color: #fca5a5;
+    }
+
+    .warning {
       color: #9a3412;
-      border: 1px solid #fdba74;
       background: #fff7ed;
+      border-color: #fdba74;
+    }
+
+    code {
+      word-break: break-all;
     }
   </style>
 </head>
 
 <body>
-  <h1>複数OA導線テスト</h1>
+  <h1>LINEミニアプリ 複数OA検証</h1>
 
-  <section>
-    <h2>対象OA</h2>
+  <div class="card">
+    <h2>LIFF初期化</h2>
 
-    <pre>デフォルトOA
-@243ygula / hogechanSTORE
+    <div id="init-status" class="status">
+      LIFF SDKの読み込みを待っています。
+    </div>
 
-2つ目のOA
-@410craoz / rimamuraOA
+    <button id="login-button" disabled>
+      LINEログイン
+    </button>
+  </div>
 
-3つ目のOA
-@747ltofe / rimamuraSTORE</pre>
-  </section>
-
-  <section class="notice">
-    <h2>テスト時の注意</h2>
+  <div class="card">
+    <h2>① デフォルトOA</h2>
 
     <p>
-      2つのrequestAll()は続けてテストできません。
-      1回目でprofileを許可した後は、2回目に要求する権限が
-      残っていないためです。
+      <code>liff.permission.requestAll()</code>
+      を引数なしで実行します。
     </p>
 
     <p>
-      検証Aの後に連動アプリを解除してから、
-      検証Bを実施してください。
+      対象：hogechanSTORE（@243ygula）
     </p>
-  </section>
 
-  <section>
-    <h2>現在の権限状態</h2>
-
-    <button id="check-permission"
-            class="gray"
-            disabled>
-      profileの権限状態を確認
+    <button id="default-request-button" disabled>
+      引数なしのrequestAll()を実行
     </button>
 
-    <pre id="permission-result">
-確認前
-    </pre>
-  </section>
-
-  <section>
-    <h2>検証A：デフォルトOA</h2>
-
-    <p>
-      引数なしでrequestAll()を実行します。
-      アクセス許可要求画面にデフォルトOAの
-      @243ygulaが表示されるか確認してください。
-    </p>
-
-    <button id="request-default"
-            disabled>
-      requestAll()を引数なしで実行
-    </button>
-
-    <button id="check-default"
-            class="gray"
-            disabled>
+    <button id="default-check-button" disabled>
       デフォルトOAの友だち状態を確認
     </button>
-  </section>
 
-  <section>
-    <h2>検証B：2つ目のOA</h2>
+    <div id="default-status" class="status">
+      未実行
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>② 2つ目のOA</h2>
 
     <p>
-      @410craozを指定してrequestAll()を実行します。
-      検証Aの後に試す場合は、先に連動を解除してください。
+      OAを指定して
+      <code>liff.permission.requestAll()</code>
+      を実行します。
     </p>
 
-    <button id="request-second"
-            class="blue"
-            disabled>
-      OA指定ありでrequestAll()を実行
+    <p>
+      対象：rimamuraOA（@410craoz）
+    </p>
+
+    <button id="second-request-button" disabled>
+      2つ目のOAでrequestAll()を実行
     </button>
 
-    <button id="check-second"
-            class="gray"
-            disabled>
+    <button id="second-check-button" disabled>
       2つ目のOAの友だち状態を確認
     </button>
-  </section>
 
-  <section>
-    <h2>検証C：3つ目のOA</h2>
+    <div id="second-status" class="status">
+      未実行
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>③ 3つ目のOA</h2>
 
     <p>
-      requestFriendship()で
-      @747ltofeを指定します。
+      OAを指定して
+      <code>liff.requestFriendship()</code>
+      を実行します。
     </p>
 
-    <button id="request-third"
-            class="orange"
-            disabled>
-      requestFriendship()を実行
+    <p>
+      対象：rimamuraSTORE（@747ltofe）
+    </p>
+
+    <button id="third-request-button" disabled>
+      3つ目のOAでrequestFriendship()を実行
     </button>
 
-    <button id="check-third"
-            class="gray"
-            disabled>
+    <button id="third-check-button" disabled>
       3つ目のOAの友だち状態を確認
     </button>
-  </section>
 
-  <section>
-    <h2>実行結果</h2>
-    <pre id="result">
-LIFFを初期化しています...
-    </pre>
-  </section>
+    <div id="third-status" class="status">
+      未実行
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>デバッグ情報</h2>
+
+    <div id="debug-status" class="status">
+      エラーはまだありません。
+    </div>
+  </div>
 
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
@@ -191,306 +200,454 @@ LIFFを初期化しています...
     const SECOND_OA = "@410craoz";
     const THIRD_OA = "@747ltofe";
 
-    const resultEl =
-      document.getElementById("result");
+    const initStatus =
+      document.getElementById("init-status");
 
-    const permissionResultEl =
-      document.getElementById("permission-result");
+    const debugStatus =
+      document.getElementById("debug-status");
 
-    const buttons =
-      document.querySelectorAll("button");
+    const loginButton =
+      document.getElementById("login-button");
 
-    function showResult(message, data) {
-      resultEl.textContent =
-        message +
-        (
-          data !== undefined
-            ? "\n\n" + JSON.stringify(data, null, 2)
-            : ""
-        );
+    const defaultRequestButton =
+      document.getElementById("default-request-button");
+
+    const defaultCheckButton =
+      document.getElementById("default-check-button");
+
+    const secondRequestButton =
+      document.getElementById("second-request-button");
+
+    const secondCheckButton =
+      document.getElementById("second-check-button");
+
+    const thirdRequestButton =
+      document.getElementById("third-request-button");
+
+    const thirdCheckButton =
+      document.getElementById("third-check-button");
+
+    const defaultStatus =
+      document.getElementById("default-status");
+
+    const secondStatus =
+      document.getElementById("second-status");
+
+    const thirdStatus =
+      document.getElementById("third-status");
+
+    function formatError(error) {
+      if (!error) {
+        return "エラーの詳細を取得できませんでした。";
+      }
+
+      const code = error.code || "コードなし";
+      const message = error.message || String(error);
+
+      return `code: ${code}\nmessage: ${message}`;
     }
 
-    function showError(method, error) {
-      showResult(
-        `${method}でエラーが発生しました`,
-        {
-          code: error?.code || "コードなし",
-          message: error?.message || String(error)
-        }
-      );
+    function showError(processName, error, statusElement) {
+      const text =
+        `${processName}でエラーが発生しました。\n` +
+        formatError(error);
+
+      statusElement.textContent = text;
+      statusElement.className = "status error";
+
+      debugStatus.textContent = text;
+      debugStatus.className = "status error";
     }
 
-    async function getProfilePermission() {
-      const status =
-        await liff.permission.query("profile");
-
-      permissionResultEl.textContent =
-        JSON.stringify(status, null, 2);
-
-      return status;
+    function enableButtons() {
+      defaultRequestButton.disabled = false;
+      defaultCheckButton.disabled = false;
+      secondRequestButton.disabled = false;
+      secondCheckButton.disabled = false;
+      thirdRequestButton.disabled = false;
+      thirdCheckButton.disabled = false;
     }
 
-    async function getFriendship(oaId) {
-      if (!oaId) {
+    function checkLogin() {
+      if (liff.isLoggedIn()) {
+        return true;
+      }
+
+      initStatus.textContent =
+        "LINEログインが必要です。LINEログインボタンを押してください。";
+
+      initStatus.className = "status warning";
+      loginButton.disabled = false;
+
+      return false;
+    }
+
+    async function getFriendship(officialAccountId) {
+      if (!officialAccountId) {
         return await liff.getFriendship();
       }
 
       return await liff.getFriendship({
-        officialAccountId: oaId
+        officialAccountId: officialAccountId
       });
     }
 
-    async function checkFriendship(
-      oaId,
-      label
+    async function showFriendship(
+      officialAccountId,
+      accountName,
+      statusElement
     ) {
-      try {
-        const data =
-          await getFriendship(oaId);
+      if (!checkLogin()) {
+        return;
+      }
 
-        showResult(
-          `${label}の友だち状態`,
-          data
-        );
+      statusElement.textContent =
+        `${accountName}の友だち状態を確認しています。`;
+
+      statusElement.className = "status";
+
+      try {
+        const result =
+          await getFriendship(officialAccountId);
+
+        if (result.friendFlag) {
+          statusElement.textContent =
+            `${accountName}は友だちです。\n` +
+            "friendFlag: true";
+
+          statusElement.className = "status success";
+        } else {
+          statusElement.textContent =
+            `${accountName}は友だちではない、` +
+            "またはブロックされています。\n" +
+            "friendFlag: false";
+
+          statusElement.className = "status warning";
+        }
       } catch (error) {
         showError(
-          `${label}のgetFriendship()`,
-          error
+          `${accountName}のgetFriendship()`,
+          error,
+          statusElement
         );
       }
     }
 
-    document
-      .getElementById("check-permission")
-      .addEventListener("click", async () => {
-        try {
-          const status =
-            await getProfilePermission();
-
-          showResult(
-            "profileの権限状態",
-            status
-          );
-        } catch (error) {
-          showError(
-            "liff.permission.query()",
-            error
-          );
-        }
-      });
-
-    /*
-     * 検証A
-     * 引数なし＝デフォルトOA
-     */
-    document
-      .getElementById("request-default")
-      .addEventListener("click", async () => {
-        try {
-          const status =
-            await getProfilePermission();
-
-          if (status.state !== "prompt") {
-            showResult(
-              "未同意のprofile権限がありません。" +
-              "\n連動アプリを解除してから再度お試しください。",
-              status
-            );
-
-            return;
-          }
-
-          showResult(
-            "引数なしでrequestAll()を実行します。" +
-            `\n想定OA：${DEFAULT_OA}`
-          );
-
-          const response =
-            await liff.permission.requestAll();
-
-          const friendship =
-            await getFriendship();
-
-          showResult(
-            "引数なしrequestAll()の実行結果",
-            {
-              response,
-              expectedOA: DEFAULT_OA,
-              friendship
-            }
-          );
-        } catch (error) {
-          showError(
-            "引数なしrequestAll()",
-            error
-          );
-        }
-      });
-
-    /*
-     * 検証B
-     * 2つ目のOAを指定
-     */
-    document
-      .getElementById("request-second")
-      .addEventListener("click", async () => {
-        try {
-          const status =
-            await getProfilePermission();
-
-          if (status.state !== "prompt") {
-            showResult(
-              "未同意のprofile権限がありません。" +
-              "\n検証Aを実行済みの場合は、" +
-              "連動アプリを解除してから再度お試しください。",
-              status
-            );
-
-            return;
-          }
-
-          showResult(
-            "OA指定ありでrequestAll()を実行します。" +
-            `\n指定OA：${SECOND_OA}`
-          );
-
-          const response =
-            await liff.permission.requestAll({
-              officialAccount: {
-                id: SECOND_OA,
-                fallback: false
-              }
-            });
-
-          const friendship =
-            await getFriendship(SECOND_OA);
-
-          showResult(
-            "OA指定ありrequestAll()の実行結果",
-            {
-              response,
-              specifiedOA: SECOND_OA,
-              friendship
-            }
-          );
-        } catch (error) {
-          showError(
-            "OA指定ありrequestAll()",
-            error
-          );
-        }
-      });
-
-    /*
-     * 検証C
-     * 3つ目のOAを指定
-     */
-    document
-      .getElementById("request-third")
-      .addEventListener("click", async () => {
-        try {
-          showResult(
-            "requestFriendship()を実行します。" +
-            `\n指定OA：${THIRD_OA}`
-          );
-
-          const response =
-            await liff.requestFriendship({
-              officialAccount: {
-                id: THIRD_OA,
-                fallback: false
-              }
-            });
-
-          const friendship =
-            await getFriendship(THIRD_OA);
-
-          showResult(
-            "requestFriendship()の実行結果",
-            {
-              response,
-              specifiedOA: THIRD_OA,
-              friendship
-            }
-          );
-        } catch (error) {
-          showError(
-            "requestFriendship()",
-            error
-          );
-        }
-      });
-
-    document
-      .getElementById("check-default")
-      .addEventListener("click", () => {
-        checkFriendship(
-          null,
-          `デフォルトOA（${DEFAULT_OA}）`
-        );
-      });
-
-    document
-      .getElementById("check-second")
-      .addEventListener("click", () => {
-        checkFriendship(
-          SECOND_OA,
-          `2つ目のOA（${SECOND_OA}）`
-        );
-      });
-
-    document
-      .getElementById("check-third")
-      .addEventListener("click", () => {
-        checkFriendship(
-          THIRD_OA,
-          `3つ目のOA（${THIRD_OA}）`
-        );
-      });
-
-    async function initialize() {
+    async function initializeLiff() {
+      /*
+       * liff.init()だけを独立して実行します。
+       * 後続処理のエラーをinitエラーとして表示しないためです。
+       */
       try {
         await liff.init({
           liffId: LIFF_ID
         });
+      } catch (error) {
+        showError(
+          "liff.init()",
+          error,
+          initStatus
+        );
 
-        if (!liff.isLoggedIn()) {
-          liff.login({
-            redirectUri: location.href
-          });
+        return;
+      }
+
+      initStatus.textContent =
+        "LIFF初期化成功\n" +
+        `LIFF ID: ${LIFF_ID}\n` +
+        `SDK: ${liff.getVersion()}\n` +
+        `LINEアプリ内: ${liff.isInClient()}\n` +
+        `ログイン済み: ${liff.isLoggedIn()}`;
+
+      initStatus.className = "status success";
+
+      debugStatus.textContent =
+        "liff.init()は正常に完了しました。";
+
+      debugStatus.className = "status success";
+
+      enableButtons();
+
+      if (!liff.isLoggedIn()) {
+        loginButton.disabled = false;
+      }
+
+      /*
+       * permission.query()はinitとは分離します。
+       * この処理に失敗してもボタンは無効にしません。
+       */
+      if (
+        liff.permission &&
+        typeof liff.permission.query === "function"
+      ) {
+        try {
+          const profilePermission =
+            await liff.permission.query("profile");
+
+          initStatus.textContent +=
+            "\nprofileの状態: " +
+            JSON.stringify(profilePermission);
+        } catch (error) {
+          debugStatus.textContent =
+            "liff.init()は成功しましたが、" +
+            "permission.query(\"profile\")で" +
+            "エラーが発生しました。\n" +
+            formatError(error);
+
+          debugStatus.className = "status warning";
+        }
+      } else {
+        debugStatus.textContent =
+          "liff.init()は成功しましたが、" +
+          "この環境ではliff.permission.query()を" +
+          "利用できません。";
+
+        debugStatus.className = "status warning";
+      }
+    }
+
+    loginButton.addEventListener("click", () => {
+      liff.login({
+        redirectUri: window.location.href
+      });
+    });
+
+    /*
+     * ① 引数なしのrequestAll()
+     * デフォルトOAが使用されます。
+     */
+    defaultRequestButton.addEventListener(
+      "click",
+      async () => {
+        if (!checkLogin()) {
+          return;
+        }
+
+        if (
+          !liff.permission ||
+          typeof liff.permission.requestAll !== "function"
+        ) {
+          showError(
+            "requestAll()",
+            new Error(
+              "liff.permission.requestAll()を利用できません。"
+            ),
+            defaultStatus
+          );
 
           return;
         }
 
-        buttons.forEach((button) => {
-          button.disabled = false;
-        });
+        defaultStatus.textContent =
+          "引数なしのrequestAll()を実行しています。";
 
-        const profilePermission =
-          await getProfilePermission();
+        defaultStatus.className = "status";
 
-        showResult(
-          "LIFF初期化成功",
-          {
-            liffId: LIFF_ID,
-            isInClient: liff.isInClient(),
-            isLoggedIn: liff.isLoggedIn(),
-            liffVersion: liff.getVersion(),
-            profilePermission,
-            defaultOA: DEFAULT_OA,
-            secondOA: SECOND_OA,
-            thirdOA: THIRD_OA
-          }
-        );
-      } catch (error) {
-        showError(
-          "liff.init()",
-          error
+        try {
+          await liff.permission.requestAll();
+
+          defaultStatus.textContent =
+            "requestAll()が完了しました。\n" +
+            `対象：デフォルトOA ${DEFAULT_OA}\n` +
+            "続けて友だち状態を確認します。";
+
+          defaultStatus.className = "status success";
+
+          await showFriendship(
+            null,
+            `デフォルトOA（${DEFAULT_OA}）`,
+            defaultStatus
+          );
+        } catch (error) {
+          showError(
+            "引数なしのrequestAll()",
+            error,
+            defaultStatus
+          );
+        }
+      }
+    );
+
+    defaultCheckButton.addEventListener(
+      "click",
+      async () => {
+        await showFriendship(
+          null,
+          `デフォルトOA（${DEFAULT_OA}）`,
+          defaultStatus
         );
       }
-    }
+    );
 
-    initialize();
+    /*
+     * ② 2つ目のOAを指定したrequestAll()
+     */
+    secondRequestButton.addEventListener(
+      "click",
+      async () => {
+        if (!checkLogin()) {
+          return;
+        }
+
+        if (
+          !liff.permission ||
+          typeof liff.permission.requestAll !== "function"
+        ) {
+          showError(
+            "requestAll()",
+            new Error(
+              "liff.permission.requestAll()を利用できません。"
+            ),
+            secondStatus
+          );
+
+          return;
+        }
+
+        secondStatus.textContent =
+          `${SECOND_OA}を指定して` +
+          "requestAll()を実行しています。";
+
+        secondStatus.className = "status";
+
+        try {
+          await liff.permission.requestAll({
+            officialAccount: {
+              id: SECOND_OA,
+              fallback: false
+            }
+          });
+
+          secondStatus.textContent =
+            "requestAll()が完了しました。\n" +
+            `対象：rimamuraOA（${SECOND_OA}）\n` +
+            "続けて友だち状態を確認します。";
+
+          secondStatus.className = "status success";
+
+          await showFriendship(
+            SECOND_OA,
+            `rimamuraOA（${SECOND_OA}）`,
+            secondStatus
+          );
+        } catch (error) {
+          showError(
+            "2つ目のOAを指定したrequestAll()",
+            error,
+            secondStatus
+          );
+        }
+      }
+    );
+
+    secondCheckButton.addEventListener(
+      "click",
+      async () => {
+        await showFriendship(
+          SECOND_OA,
+          `rimamuraOA（${SECOND_OA}）`,
+          secondStatus
+        );
+      }
+    );
+
+    /*
+     * ③ 3つ目のOAを指定したrequestFriendship()
+     */
+    thirdRequestButton.addEventListener(
+      "click",
+      async () => {
+        if (!checkLogin()) {
+          return;
+        }
+
+        if (
+          typeof liff.requestFriendship !== "function"
+        ) {
+          showError(
+            "requestFriendship()",
+            new Error(
+              "liff.requestFriendship()を利用できません。"
+            ),
+            thirdStatus
+          );
+
+          return;
+        }
+
+        thirdStatus.textContent =
+          `${THIRD_OA}の友だち追加画面を表示しています。`;
+
+        thirdStatus.className = "status";
+
+        try {
+          await liff.requestFriendship({
+            officialAccount: {
+              id: THIRD_OA,
+              fallback: false
+            }
+          });
+
+          thirdStatus.textContent =
+            "友だち追加画面が閉じられました。\n" +
+            "続けて友だち状態を確認します。";
+
+          thirdStatus.className = "status success";
+
+          await showFriendship(
+            THIRD_OA,
+            `rimamuraSTORE（${THIRD_OA}）`,
+            thirdStatus
+          );
+        } catch (error) {
+          showError(
+            "3つ目のOAを指定したrequestFriendship()",
+            error,
+            thirdStatus
+          );
+        }
+      }
+    );
+
+    thirdCheckButton.addEventListener(
+      "click",
+      async () => {
+        await showFriendship(
+          THIRD_OA,
+          `rimamuraSTORE（${THIRD_OA}）`,
+          thirdStatus
+        );
+      }
+    );
+
+    window.addEventListener(
+      "unhandledrejection",
+      (event) => {
+        debugStatus.textContent =
+          "未処理のPromiseエラー\n" +
+          formatError(event.reason);
+
+        debugStatus.className = "status error";
+      }
+    );
+
+    window.addEventListener(
+      "error",
+      (event) => {
+        debugStatus.textContent =
+          "JavaScriptエラー\n" +
+          `message: ${event.message}\n` +
+          `line: ${event.lineno}\n` +
+          `column: ${event.colno}`;
+
+        debugStatus.className = "status error";
+      }
+    );
+
+    window.addEventListener(
+      "DOMContentLoaded",
+      initializeLiff
+    );
   </script>
 </body>
 </html>
