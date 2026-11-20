@@ -1,4 +1,4 @@
-const LINE_LOGIN_CHANNEL_ID = "2008571451";
+const LINE_LOGIN_CHANNEL_ID = "2012720267";
 const CALLBACK_URL =
   "https://rimamura-san.github.io/line-login-oa-switch/";
 
