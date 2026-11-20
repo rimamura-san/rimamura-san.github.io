@@ -72,7 +72,7 @@ function startLogin() {
     redirect_uri: CALLBACK_URL,
     state,
     scope: "profile openid",
-    bot_prompt: "normal",
+    bot_prompt: "aggressive",
   });
 
   if (forceConsentCheckbox.checked) {
