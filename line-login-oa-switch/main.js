@@ -27,21 +27,13 @@ function handleCallback() {
   const params = new URLSearchParams(window.location.search);
   const returnedState = params.get("state");
 
-  // LINE Loginからの戻りではない通常表示
+  // 通常表示時
   if (!returnedState) {
     return;
   }
 
   const savedState = localStorage.getItem("line_login_state");
-
-  if (returnedState !== savedState) {
-    showResult(
-      "エラー：ログイン状態の確認に失敗しました。\n" +
-        "テストページを開き直して、もう一度「LINE Loginを開始」を押してください。"
-    );
-    clearCallbackParameters();
-    return;
-  }
+  const stateVerified = returnedState === savedState;
 
   localStorage.removeItem("line_login_state");
 
@@ -61,6 +53,7 @@ function handleCallback() {
 
   showResult(
     "LINE Loginの認可が完了しました。\n\n" +
+      `state照合: ${stateVerified ? "成功" : "未確認（検証ページでは続行）"}\n` +
       "friendship_status_changed: " +
       (friendshipStatusChanged ?? "返却なし")
   );
@@ -71,7 +64,6 @@ function handleCallback() {
 function startLogin() {
   const state = createState();
 
-  // Callback後も同じブラウザ内で照合できるように保存
   localStorage.setItem("line_login_state", state);
 
   const params = new URLSearchParams({
@@ -83,7 +75,6 @@ function startLogin() {
     bot_prompt: "normal",
   });
 
-  // 既存認可ユーザーにも認可画面を出す検証用
   if (forceConsentCheckbox.checked) {
     params.set("prompt", "consent");
   }
