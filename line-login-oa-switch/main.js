@@ -19,27 +19,39 @@ function createState() {
   ).join("");
 }
 
+function clearCallbackParameters() {
+  window.history.replaceState({}, "", window.location.pathname);
+}
+
 function handleCallback() {
   const params = new URLSearchParams(window.location.search);
-  const state = params.get("state");
+  const returnedState = params.get("state");
 
-  // 通常表示時。LINE Loginから戻ったときだけ処理する
-  if (!state) return;
-
-  const savedState = sessionStorage.getItem("line_login_state");
-
-  if (state !== savedState) {
-    showResult("エラー：ログイン状態の確認に失敗しました。");
+  // LINE Loginからの戻りではない通常表示
+  if (!returnedState) {
     return;
   }
 
-  sessionStorage.removeItem("line_login_state");
+  const savedState = localStorage.getItem("line_login_state");
+
+  if (returnedState !== savedState) {
+    showResult(
+      "エラー：ログイン状態の確認に失敗しました。\n" +
+        "テストページを開き直して、もう一度「LINE Loginを開始」を押してください。"
+    );
+    clearCallbackParameters();
+    return;
+  }
+
+  localStorage.removeItem("line_login_state");
 
   if (params.get("error")) {
     showResult(
-      `ログインは完了しませんでした。\n${params.get("error")}\n` +
+      "ログインは完了しませんでした。\n" +
+        `${params.get("error")}\n` +
         (params.get("error_description") ?? "")
     );
+    clearCallbackParameters();
     return;
   }
 
@@ -53,21 +65,14 @@ function handleCallback() {
       (friendshipStatusChanged ?? "返却なし")
   );
 
-  // code や state をアドレスバーから消す
-  window.history.replaceState({}, "", window.location.pathname);
+  clearCallbackParameters();
 }
 
 function startLogin() {
-  if (
-    !LINE_LOGIN_CHANNEL_ID ||
-    LINE_LOGIN_CHANNEL_ID === "ここにLINE LoginチャネルIDを入れる"
-  ) {
-    showResult("LINE LoginチャネルIDを main.js に設定してください。");
-    return;
-  }
-
   const state = createState();
-  sessionStorage.setItem("line_login_state", state);
+
+  // Callback後も同じブラウザ内で照合できるように保存
+  localStorage.setItem("line_login_state", state);
 
   const params = new URLSearchParams({
     response_type: "code",
@@ -78,6 +83,7 @@ function startLogin() {
     bot_prompt: "normal",
   });
 
+  // 既存認可ユーザーにも認可画面を出す検証用
   if (forceConsentCheckbox.checked) {
     params.set("prompt", "consent");
   }
